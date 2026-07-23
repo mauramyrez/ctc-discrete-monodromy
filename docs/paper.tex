@@ -1,11 +1,22 @@
+%%
 %% SoftwareX Original Software Publication (OSP)
-%% Based on the official Elsevier template:
-%%   https://www.elsevier.com/__data/promis_misc/softwarex-osp-template.tex
-%% Local copy: docs/softwarex-osp-template.tex
-%% Content describes ctc-discrete-monodromy v0.1.0 (Rust/Python source logic unchanged)
+%% ----------------------------------------------------------------------------
+%% Built from:
+%%   1) Official SoftwareX OSP skeleton: docs/softwarex-osp-template.tex
+%%   2) Local Elsevier elsarticle bundle: docs/elsarticle/elsarticle/
+%%      (elsarticle.cls + elsarticle-num.bst copied into docs/ for compilation)
+%%
+%% Submit: paper.tex + references.bib + elsarticle.cls + elsarticle-num.bst
+%%         (+ optional docs/figures/)
+%% Describes: ctc-discrete-monodromy v0.1.0
+%%
 
 \documentclass[preprint,12pt,a4paper]{elsarticle}
 
+%% Use the option review to obtain double line spacing
+%% \documentclass[authoryear,preprint,review,12pt]{elsarticle}
+
+%% The amssymb package provides various useful mathematical symbols
 \usepackage{amssymb}
 \usepackage{amsmath}
 \usepackage{hyperref}
@@ -15,6 +26,13 @@
 \usepackage{graphicx}
 \usepackage{listings}
 \setlength{\parindent}{0pt}
+%% The amsthm package provides extended theorem environments
+%% \usepackage{amsthm}
+
+%% The lineno packages adds line numbers. Start line numbering with
+%% \begin{linenumbers}, end it with \end{linenumbers}. Or switch it on
+%% for the whole article with \linenumbers.
+%% \usepackage{lineno}
 
 \lstset{
   basicstyle=\ttfamily\footnotesize,
@@ -38,8 +56,19 @@
 
 \begin{frontmatter}
 
+%% Title, authors and addresses
+%% use the tnoteref command within \title for footnotes;
+%% use the tnotetext command for the associated footnote;
+%% use the fnref command within \author or \address for footnotes;
+%% use the fntext command for the associated footnote;
+%% use the corref command within \author for corresponding author footnotes;
+%% use the cortext command for the associated footnote;
+%% use the ead command for the email address,
+%% and the form \ead[url] for the home page.
+
 \title{ctc-discrete-monodromy: a reproducible Rust/SymPy framework for discrete operator diagnostics on axisymmetric ergoregion backgrounds}
 
+%% use optional labels to link authors explicitly to addresses:
 \author[umsn]{Mauricio Miguel Paniagua Ramirez\corref{cor1}}
 \ead{1912574a@umich.mx}
 \cortext[cor1]{Corresponding author}
@@ -369,8 +398,18 @@ Source code, license (MIT), and documentation are permanently available at
 \label{sec:ack}
 Symbolic and numerical artifacts accompany this SoftwareX Original Software Publication in the open-source repository \texttt{ctc-discrete-monodromy}.
 
+\section*{Declaration of generative AI and AI-assisted technologies in the manuscript preparation process}
+\label{sec:ai-declaration}
+During the preparation of this work, the author used generative AI and large language model (LLM) assistants for language editing, clarity improvement, and structural formatting of the manuscript.
+After using these tools and services, the author reviewed, audited, and edited all outputs to ensure technical accuracy and takes full responsibility for the content of the published article.
+
+%% If you have bibdatabase file and want bibtex to generate the
+%% bibitems, please use
 \bibliographystyle{elsarticle-num}
 \bibliography{references}
+
+%% else use the following coding to input the bibitems directly in the
+%% TeX file (see softwarex-osp-template.tex).
 
 \section*{Current executable software version}
 \label{sec:soft-version}
@@ -401,3 +440,8 @@ S7 & Support email for questions & 1912574a@umich.mx \\
 \end{table}
 
 \end{document}
+
+\endinput
+%%
+%% End of SoftwareX OSP manuscript (elsarticle + SoftwareX template).
+%%
