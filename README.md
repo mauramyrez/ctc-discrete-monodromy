@@ -2,9 +2,11 @@
 
 A high-performance Rust framework for discrete operator diagnostics, symbolic metric export, and spectral stability analysis on axisymmetric background profiles.
 
-Open-source companion to the SoftwareX **Original Software Publication** (OSP) for **ctc-discrete-monodromy** v0.1.0. Core deliverables: typed circulant-kernel assembly, spectral-radius / Lipschitz regression oracles, homogeneous and inhomogeneous Picard solvers (`Φ = KΦ + S`), modular kernel comparison, and RK4 geodesic regression checks. Optional Python helpers export symbolic equatorial curvature assets and regenerate manuscript figures.
+Open-source companion to the SoftwareX **Original Software Publication** (OSP) for **ctc-discrete-monodromy** v0.1.0.
 
-**Scope:** discrete operator diagnostics on explicit metric profiles—not continuum field theorems. Certified numerical claims refer to the row-normalized kernel \(K\) on \(\mathbb{R}^N\) and residuals of \(\Phi = K\Phi + S\).
+**What is reusable beyond the demo geometry?** The core product is a typed circulant-kernel / Picard harness (`DiscreteMonodromyOperator`, modular `KernelKind`, homogeneous and inhomogeneous maps `Φ = KΦ + S`, spectral-radius / Lipschitz oracles, RK4 geodesic checks). The Morris–Thorne frame-dragging profile is the reference application, not a continuum field claim.
+
+**Naming note:** the historical `ctc-` package prefix is retained for repository continuity and does **not** assert closed-timelike-curve physics.
 
 | Item | Value |
 |------|--------|
@@ -15,6 +17,15 @@ Open-source companion to the SoftwareX **Original Software Publication** (OSP) f
 | OS | Windows 10+, Linux, macOS |
 | Repository | https://github.com/mauramyrez/ctc-discrete-monodromy |
 | Support | 1912574a@umich.mx |
+
+## Intended users (SoftwareX scope)
+
+- Numerical analysts needing a forkable regression oracle for row-normalized dense periodic kernels
+- Research software engineers who want dimension-safe Picard / spectral gates in CI
+- Computational-relativity practitioners sampling explicit axisymmetric profiles
+- Instructors regenerating optional illustration PDFs without coupling Python to the Rust acceptance gate
+
+**Scope:** discrete operator diagnostics on explicit metric profiles—not continuum field theorems. Certified numerical claims refer to the row-normalized kernel \(K\) on \(\mathbb{R}^N\) and residuals of \(\Phi = K\Phi + S\).
 
 ## Quick start (acceptance gate)
 

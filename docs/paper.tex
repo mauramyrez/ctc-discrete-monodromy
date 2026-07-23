@@ -48,14 +48,14 @@ Universidad Michoacana de San Nicol\'as de Hidalgo (UMSNH),
 Morelia, Michoac\'an, M\'exico}
 
 \begin{abstract}
-\texttt{ctc-discrete-monodromy} is an open-source numerical framework for constructing explicit stationary, axisymmetric Morris--Thorne metric profiles with strong azimuthal frame dragging, exporting equatorial curvature assets via SymPy, and benchmarking row-normalized discrete monodromy operators in typed Rust.
-It targets computational physicists, numerical analysts, and research software engineers who need reproducible circulant-kernel spectral diagnostics, Picard fixed-point regression (homogeneous and inhomogeneous), modular kernel comparison, and RK4 geodesic checks.
-Design choices such as mass-gap row renormalization and grid-oscillation Lipschitz proxies are implemented as numerical test oracles that certify pipeline stability ($\rho(K)<1$, residuals $<10^{-8}$), not as continuum field theorems.
+\texttt{ctc-discrete-monodromy} is an open-source Rust/SymPy research-software stack for discrete operator diagnostics on explicit axisymmetric metric profiles: circulant-kernel assembly, spectral-radius and Lipschitz regression oracles, homogeneous and inhomogeneous Picard solvers ($\Phi=K\Phi+S$), modular kernel comparison, and RK4 geodesic checks.
+Although motivated by frame-dragging Morris--Thorne backgrounds, the numerical core is domain-transferable to any periodic sampling loop that needs reproducible row-normalized dense maps and fixed-point residual gates.
+Design choices such as mass-gap row renormalization are implemented as software test oracles ($\rho(K)<1$, residuals $<10^{-8}$), not continuum field theorems.
 All $17/17$ Rust unit tests pass; the stack is MIT-licensed and runs on Windows, Linux, and macOS.
 \end{abstract}
 
 \begin{keyword}
-scientific software \sep Rust \sep SymPy \sep discrete monodromy \sep numerical benchmarking \sep reproducible research
+scientific software \sep Rust \sep SymPy \sep discrete operators \sep spectral diagnostics \sep reproducible research
 \end{keyword}
 
 \end{frontmatter}
@@ -100,35 +100,31 @@ C8 & Support email for questions & 1912574a@umich.mx \\
 \section{Motivation and significance}
 \label{sec:motivation}
 
-Numerical work on stationary axisymmetric geometries routinely needs three ingredients that are rarely packaged together in a single, regression-tested stack:
-(i)~closed-form metric profiles with controllable frame dragging and an equatorial ergoregion locus;
-(ii)~symbolic export of background curvature tensors for documentation and static constraint checks; and
-(iii)~typed, high-performance discrete operator diagnostics with automated spectral and fixed-point oracles.
+Research software for continuum tensor calculus and spacetime visualization is comparatively mature~\cite{Meurer2017,Bapat2019,SageManifolds,BaumgarteShapiro2010}, while reproducible hygiene for dense circulant operators---row-sum normalization semantics, spectral-radius regression, Picard residual tracking, and dimension-safe matrix--vector application---is still often left to one-off notebooks built on generic array stacks~\cite{Harris2020,Virtanen2020,Trefethen2000}.
+That gap produces fragile floating-point pipelines that are difficult to cite, fork, and regress across operating systems.
 
-Existing general-relativity toolkits emphasize continuum tensor calculus or spacetime visualization~\cite{Morris1988,Visser1995}, but leave discrete circulant-operator hygiene---row-sum normalization semantics, spectral-radius regression, Picard residual tracking, and dimension-safe matrix--vector application---to ad~hoc scripts.
-That gap produces fragile floating-point pipelines that are difficult to reproduce across operating systems and hard to cite as software artifacts.
-
-\texttt{ctc-discrete-monodromy} closes this gap for an explicit Morris--Thorne profile class with azimuthal frame dragging.
-Intended users are computational physicists, numerical analysts, and engineers who need a maintainable benchmark for discrete linear maps sampled on azimuthal loops, not a continuum well-posedness theorem for fields on causality-sensitive backgrounds.
+\texttt{ctc-discrete-monodromy} addresses this gap as a typed Rust engine with optional SymPy documentation exports.
+The historical package name retains the prefix \texttt{ctc-} for repository continuity; the software does \emph{not} claim continuum closed-timelike-curve physics.
+The reference application samples an explicit Morris--Thorne profile class with azimuthal frame dragging~\cite{Morris1988,Visser1995,HawkingEllis1973}, but the reusable product is the discrete-operator harness: any user who needs a maintainable benchmark for row-normalized maps on periodic nodes can adopt the same APIs, tests, and CLI reports.
 
 An open-source Rust implementation is necessary because:
 \begin{itemize}
   \item typed ownership and explicit dimension asserts eliminate silent truncation bugs common in notebook-centric operator code;
   \item release-mode performance with link-time optimization supports dense $N\times N$ kernel builds and Picard loops without sacrificing reproducibility;
-  \item a Cargo test harness provides deterministic regression gates ($17/17$ unit tests) suitable for continuous integration.
+  \item a Cargo test harness provides deterministic regression gates ($17/17$ unit tests) suitable for continuous integration and cross-domain reuse studies.
 \end{itemize}
 
 \paragraph{Experimental setting (how the user uses the software).}
 A typical session is:
-(1)~install the pinned Python stack and run SymPy export/figure scripts;
-(2)~build the Rust crate and run \texttt{ctc-engine} for interactive spectral/Picard reports;
-(3)~execute \texttt{cargo test} as the acceptance gate before modifying kernels or profiles.
+(1)~build the Rust crate and run \texttt{ctc-engine} for interactive spectral/Picard reports;
+(2)~execute \texttt{cargo test} as the acceptance gate before modifying kernels or profiles;
+(3)~optionally install the pinned Python stack to regenerate SymPy tensor assets or illustration figures.
 All certified numerical claims refer to the discrete operator $\MN$ constructed in the crate; continuous equations only motivate kernel shapes.
 
 \paragraph{Related work.}
-Classical wormhole teaching models~\cite{Morris1988,Visser1995} and stationary ergoregion geometry~\cite{HawkingEllis1973} provide the profile class used as an explicit metric background for discrete sampling.
-This software implements only discrete operator diagnostics---circulant-kernel assembly, spectral-radius regression, and Picard residual tracking---on azimuthal samples of those profiles, without continuum field or causality claims.
-The companion open-source repository archives the implementation and regression suite~\cite{PaniaguaRamirez2026CTC}.
+Symbolic and numerical GR ecosystems emphasize continuum tensors and spacetime analysis~\cite{Meurer2017,Bapat2019,SageManifolds,BaumgarteShapiro2010}.
+Spectral and array libraries provide the generic linear-algebra substrate~\cite{Trefethen2000,Harris2020,Virtanen2020} but do not ship a regression-tested, dimension-safe circulant monodromy oracle with inhomogeneous Picard workloads and modular kernel comparison.
+This software fills that narrow but reusable niche and archives the implementation under an MIT license~\cite{PaniaguaRamirez2026CTC}.
 
 %%==============================================================================
 \section{Software description}
@@ -137,23 +133,23 @@ The companion open-source repository archives the implementation and regression 
 \subsection{Software architecture}
 \label{sec:architecture}
 
-The repository is organized as a dual-language research software stack (Fig.~\ref{fig:pipeline}):
+The GitHub repository root is the Cargo package root (Fig.~\ref{fig:pipeline}):
 
 \begin{lstlisting}[language={}]
-CTC-Research-Framework/
-  Cargo.toml, requirements.txt, LICENSE (MIT)
-  src/                 # Rust crate: ctc_research_framework
-    lib.rs             # public modules: algebra, dynamics, energy
-    algebra/           # metric profiles, invariants, Christoffel FD
+ctc-discrete-monodromy/          # repository / crate root
+  Cargo.toml, LICENSE, LICENSE.txt, README.md, requirements.txt
+  src/                           # Rust crate: ctc_research_framework
+    lib.rs                       # algebra, dynamics, energy
+    algebra/                     # metric profiles, invariants, Christoffel FD
     dynamics/
-      monodromy.rs     # DiscreteMonodromyOperator, Picard, kernels
-      geodesic.rs      # RK4 equatorial geodesic integrator
-      bvp.rs           # smoke tests (homogeneous + inhomogeneous)
-    energy/            # API scaffold for quadratic-form checks
-    main.rs            # ctc-engine CLI driver
-    tests/             # regression suite (monodromy_test.rs)
-  scripts/             # SymPy export + Matplotlib diagrams
-  docs/                # SoftwareX manuscript + figures
+      monodromy.rs               # DiscreteMonodromyOperator, Picard, kernels
+      geodesic.rs                # RK4 equatorial geodesic integrator
+      bvp.rs                     # smoke tests (homogeneous + inhomogeneous)
+    energy/                      # API scaffold for quadratic-form checks
+    main.rs                      # ctc-engine CLI driver
+    tests/monodromy_test.rs      # regression suite entry
+  scripts/                       # optional SymPy export + Matplotlib figures
+  docs/                          # SoftwareX OSP manuscript + figures
 \end{lstlisting}
 
 \begin{itemize}
@@ -171,7 +167,7 @@ CTC-Research-Framework/
 \textbf{cargo test} (17/17)\;$\longrightarrow$\;
 \textbf{docs/} (SoftwareX \LaTeX)
 }}
-\caption{End-to-end software pipeline: symbolic export, typed discrete-operator engine, automated regression, and manuscript assets.}
+\caption{End-to-end software pipeline: optional symbolic export, typed discrete-operator engine, automated regression, and SoftwareX manuscript assets.}
 \label{fig:pipeline}
 \end{figure}
 
@@ -341,29 +337,30 @@ Figure scripts under \texttt{scripts/plot\_spacetime\_diagrams.py} optionally re
 \section{Impact}
 \label{sec:impact}
 
-The primary impact of \texttt{ctc-discrete-monodromy} is software reuse and numerical hygiene rather than a claim of new physical law:
+The primary impact of \texttt{ctc-discrete-monodromy} is reusable research-software infrastructure for discrete linear maps, not a claim of new physical law.
+SoftwareX-relevant reuse pathways include:
 
 \begin{itemize}
-  \item \textbf{New research questions.}
-  Comparative modular kernels (\texttt{KernelKind}) and inhomogeneous discrete maps $\Phi=K\Phi+S$ are first-class APIs against a fixed regression baseline, enabling nontrivial response studies beyond the homogeneous null oracle.
-  \item \textbf{Improved pursuit of existing questions.}
-  Discrete-operator studies on frame-dragging axisymmetric profiles gain a citable, reproducible spectral/Picard harness instead of one-off notebooks~\cite{PaniaguaRamirez2026CTC}.
-  \item \textbf{Daily practice.}
-  Users obtain a single command path from profile construction to spectral/Picard reports and figure generation, reducing friction between symbolic metric documentation and numerical regression.
-  \item \textbf{Maintainability and performance.}
-  Explicit dimension asserts, MIT licensing, pinned Python dependencies, and a $17/17$ Cargo suite make the stack suitable for continuous integration; Rust LTO supports rapid $N\sim 10^{2}$ operator sweeps.
-  \item \textbf{Benchmarking role.}
-  Circulant row-normalization and grid-oscillation Lipschitz bounds act as portable test oracles: any future kernel variant that breaks $\rho(K)<1$ or Picard residual gates fails loudly under \texttt{cargo test}.
+  \item \textbf{Cross-domain numerical analysis.}
+  Any periodic sampling problem that needs a row-normalized dense kernel, spectral-radius / Lipschitz gates, and Picard residual tracking can reuse \texttt{DiscreteMonodromyOperator}, \texttt{KernelKind}, and $\Phi=K\Phi+S$ without adopting the Morris--Thorne profile layer.
+  \item \textbf{Computational-relativity workflows.}
+  Relative to continuum GR packages~\cite{Bapat2019,SageManifolds,BaumgarteShapiro2010}, the crate supplies a missing regression harness for discrete circulant diagnostics on explicit axisymmetric backgrounds~\cite{PaniaguaRamirez2026CTC}.
+  \item \textbf{Daily practice for research software engineers.}
+  A single command path (\texttt{cargo test} / \texttt{ctc-engine}) turns profile construction into spectral/Picard reports with dimension-safe asserts, reducing notebook fragility.
+  \item \textbf{Benchmarking and CI.}
+  Circulant row-normalization and oscillation Lipschitz bounds act as portable oracles: kernel variants that break $\rho(K)<1$ or residual thresholds fail loudly under the $17/17$ suite.
+  \item \textbf{Educational reuse.}
+  The optional SymPy/Matplotlib layer regenerates illustration assets for teaching frame-dragging geometry while keeping the Rust acceptance gate independent of Python.
 \end{itemize}
 
-As an initial public release (v0.1.0), adoption metrics and commercial use are not yet available; the intended near-term impact is archival citability and reuse within computational-relativity and numerical-analysis communities.
+As an initial public release (v0.1.0), download and citation metrics are not yet available; the near-term impact target is archival citability and adoption as a small, forkable discrete-operator benchmark within scientific computing and numerical-relativity communities.
 
 %%==============================================================================
 \section{Conclusions}
 \label{sec:conclusions}
 
-We have delivered an open-source Rust/SymPy framework that builds explicit frame-dragging Morris--Thorne profiles, exports equatorial curvature assets symbolically, and benchmarks a mass-gap--renormalized discrete monodromy matrix with both homogeneous and inhomogeneous ($\Phi=K\Phi+S$) Picard diagnostics plus modular kernel comparison.
-The contribution is a robust, high-performance, and reproducible software artifact for discrete operator diagnostics on explicit metric profiles, with automated regression testing and clear separation between implemented numerics and analytical outlook.
+We have delivered an open-source Rust/SymPy framework whose reusable core is a regression-tested discrete operator engine---row-normalized circulant kernels, spectral/Lipschitz diagnostics, homogeneous and inhomogeneous ($\Phi=K\Phi+S$) Picard solvers, and modular kernel comparison---demonstrated on explicit frame-dragging Morris--Thorne profiles with optional symbolic export.
+The contribution is a high-performance, reproducible software artifact aligned with SoftwareX's emphasis on reusable research software, with clear separation between implemented numerics and analytical outlook.
 Source code, license (MIT), and documentation are permanently available at
 \url{https://github.com/mauramyrez/ctc-discrete-monodromy}~\cite{PaniaguaRamirez2026CTC}
 (manuscript date: \manuscriptdate).
