@@ -93,7 +93,7 @@
 \newcommand{\articletype}[1]{{\vspace*{-8mm}\noindent \Large \sf Classical and Quantum Gravity}
 
 \vspace*{8mm} \noindent\reversemarginpar
-\marginpar{\vspace{-3mm} {\color{gray}\hrule} \ \\ Crossmark\\ {\color{gray}\hrule} \ \\ \tiny {\sf RECEIVED} {\small \\ dd Month yyyy}\\ \\ {\sf REVISED} {\small \\ dd Month yyyy}}{\scriptsize \sf{\bfseries \MakeUppercase{#1}}}}
+\marginpar{\vspace{-3mm} {\color{gray}\hrule} \ \\ Crossmark\\ {\color{gray}\hrule} \ \\ \tiny {\sf RECEIVED} {\small \\ 22 July 2026}\\ \\ {\sf REVISED} {\small \\ dd Month yyyy}}{\scriptsize \sf{\bfseries \MakeUppercase{#1}}}}
 
 \renewcommand{\title}[1]{{\exhyphenpenalty=10000\hyphenpenalty=10000 
  \fontsize{18}{21}\selectfont\noindent\raggedright

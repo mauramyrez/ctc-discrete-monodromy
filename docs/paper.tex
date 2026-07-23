@@ -5,6 +5,10 @@
 
 \usepackage{amsmath,amssymb,amsfonts,amsthm}
 \usepackage{microtype}
+\usepackage{url}
+
+% Manuscript date (first submission draft)
+\newcommand{\manuscriptdate}{22 July 2026}
 
 \newcommand{\Phir}{\Phi(r)}
 \newcommand{\br}{b(r)}
@@ -69,7 +73,7 @@ We organize the contribution around four criteria of decreasing computational st
 
 Throughout, ``continuous'' statements motivate the kernel form; all certified numerical claims refer to the discrete operator $\MN$ constructed in Sec.~\ref{sec:novikov}.
 Criterion~(C3) is the primary result.
-The reproducible pipeline is SymPy tensor export $\to$ typed Rust integration $\to$ IOP journal \LaTeX\ rendering (Sec.~\ref{sec:conclusion}).
+The reproducible pipeline is SymPy tensor export $\to$ typed Rust integration $\to$ IOP journal \LaTeX\ rendering (Sec.~\ref{sec:conclusion}), with all companion artifacts released in the open-source repository~\cite{PaniaguaRamirez2026CTC}.
 
 %==============================================================================
 \section{Geometry and profile class}
@@ -326,6 +330,9 @@ The bound is cutoff-regulated within an EFT sector; it is not a claim that a min
 \label{sec:conclusion}
 
 We have constructed a reproducible computational pipeline---symbolic GR export (SymPy), typed integration (Rust), and document rendering (IOP journal \LaTeX)---for Novikov consistency verification on axisymmetric frame-dragging wormhole backgrounds.
+The complete companion codebase, including the discrete monodromy engine, SymPy exports, unit tests, and manuscript sources, is publicly available at
+\url{https://github.com/mauramyrez/ctc-discrete-monodromy}~\cite{PaniaguaRamirez2026CTC}
+(manuscript date: \manuscriptdate).
 The single, defensible contribution is:
 
 \begin{quote}
@@ -343,13 +350,13 @@ In terms of the criteria~(C1)--(C4):
 Global hyperbolicity is not restored once chronology-violating loci exist; Cauchy-problem statements remain local to chronology-respecting regions.
 Observational constraints and a continuum limit of $\MN$ without row renormalization are deferred to future work.
 
-\ack{Symbolic and numerical artifacts accompany this work in the CTC Research Framework repository.}
+\ack{Symbolic and numerical artifacts accompany this work in the open-source repository \texttt{ctc-discrete-monodromy}~\cite{PaniaguaRamirez2026CTC}.}
 
 \funding{This research received no specific grant from any funding agency in the public, commercial, or not-for-profit sectors.}
 
 \roles{Mauricio Miguel Paniagua Ramirez: Conceptualization, Methodology, Software, Formal analysis, Writing -- original draft, Writing -- review \& editing.}
 
-\data{The symbolic exports, Rust integration crate, unit tests, and figure-generation scripts that support the findings of this study are available in the CTC Research Framework repository accompanying this work.}
+\data{The symbolic exports, Rust integration crate, unit tests, and figure-generation scripts that support the findings of this study are openly available in the GitHub repository \texttt{ctc-discrete-monodromy} at \url{https://github.com/mauramyrez/ctc-discrete-monodromy}~\cite{PaniaguaRamirez2026CTC} (accessed \manuscriptdate).}
 
 \suppdata{Appendices~\ref{app:tensors}--\ref{app:energy} collect the SymPy-exported equatorial Einstein-tensor components and NEC/WEC contractions used as static background assets (criterion~C2).}
 
