@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Energy-condition verification for the equatorial CTC metric slice.
+Energy-condition verification for the equatorial frame-dragging metric slice.
 
 Exports:
   docs/energy_conditions_summary.tex  — compact main-body summary
@@ -96,7 +96,7 @@ def export_summary(data: dict) -> str:
         f"\\begin{{equation}}\n  k^t = {sp.latex(data['k'][0])}.\n\\end{{equation}}\n"
         "With profiles~\eqref{eq:profiles}, the lab-frame density satisfies "
         "$\\lim_{r\\to r_0^{+}}\\rho<0$, confirming localized exotic matter on "
-        "$[r_0,\\, r_{\\mathrm{CTC}}+\\delta]$ (criterion~C2).\n"
+        "$[r_0,\\, r_{\\mathrm{ERGO}}+\\delta]$ (criterion~C2).\n"
         "A non-minimal scalar field $\\phif$ with "
         "$\\mathcal{L}_{\\mathrm{ST}}=\\tfrac12(\\partial\\phif)^{2}+\\zeta\\,\\phif R$ "
         "offsets $|\\rho_{\\mathrm{neg}}|$ when $|\\zeta\\,\\phif R|>|\\rho_{\\mathrm{neg}}|$ "

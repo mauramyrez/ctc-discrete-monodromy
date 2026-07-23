@@ -1,4 +1,4 @@
-# CTC Research Framework — Python symbolic / numerical stack
+# Discrete operator diagnostics framework — Python symbolic / numerical stack
 # Pin versions for bit-for-bit reproducibility of symbolic exports.
 
 # Core symbolic / numeric

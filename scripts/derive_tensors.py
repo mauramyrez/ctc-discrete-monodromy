@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Symbolic Einstein tensor export for the equatorial CTC metric slice.
+Symbolic Einstein tensor export for the equatorial frame-dragging metric slice.
 
 Exports:
   docs/derived_equations_summary.tex  — compact main-body summary

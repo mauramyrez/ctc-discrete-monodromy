@@ -79,13 +79,13 @@ C1 & Current code version & 0.1.0 \\
 \hline
 C2 & Permanent GitHub link to code/repository used for this code version & \url{https://github.com/mauramyrez/ctc-discrete-monodromy} \\
 \hline
-C3 & Legal Code License & MIT License \\
+C3 & Legal Code License & MIT License (\texttt{LICENSE} / \texttt{LICENSE.txt} in repository root) \\
 \hline
-C4 & Code versioning system used & git \\
+C4 & Code versioning system used & git (annotated tag \texttt{v0.1.0}) \\
 \hline
-C5 & Software code languages, tools, and services used & Rust 2021 edition (\texttt{nalgebra}, \texttt{serde}, \texttt{anyhow}, \texttt{thiserror}); Python~3 (SymPy, NumPy, SciPy, Matplotlib); Cargo; pip \\
+C5 & Software code languages, tools, and services used & Rust 2021 edition (\texttt{nalgebra}, \texttt{serde}, \texttt{anyhow}, \texttt{thiserror}); optional Python~3 (SymPy, NumPy, SciPy, Matplotlib) for symbolic export and figure regeneration; Cargo; pip \\
 \hline
-C6 & Compilation requirements, operating environments \& dependencies & \texttt{rustup} (stable) + Cargo; optional \texttt{high-prec} feature (GMP/MPFR via \texttt{rug}). OS: Windows~10+, Linux, macOS. Python~$\ge$3.10 with \texttt{requirements.txt} pins. \\
+C6 & Compilation requirements, operating environments \& dependencies & \texttt{rustup} (stable) + Cargo; optional \texttt{high-prec} feature (GMP/MPFR via \texttt{rug}). OS: Windows~10+, Linux, macOS. Optional Python~$\ge$3.10 with \texttt{requirements.txt} pins (not required for \texttt{cargo test}). \\
 \hline
 C7 & If available Link to developer documentation/manual & \url{https://github.com/mauramyrez/ctc-discrete-monodromy\#readme} \\
 \hline
@@ -228,9 +228,10 @@ are exposed as software thresholds.
 \texttt{geodesic.rs} supplies classical RK4 integration ($\Delta\tau=0.01$, $200$ steps) of co-rotating, unit-normalized equatorial initial data with Christoffel symbols from central finite differences ($\varepsilon=10^{-5}$).
 These orbits are integrator regression checks on the near-ergoregion exterior.
 
-\paragraph{Symbolic export workflow.}
-Python scripts export equatorial Einstein-tensor components and NEC/WEC contractions for the profile class~\eqref{eq:profiles}.
-Rust \texttt{energy} modules exercise only scaffold quadratic forms for API sanity; manuscript-grade contractions remain SymPy assets.
+\paragraph{Optional symbolic export and illustration workflow.}
+Python scripts optionally export equatorial Einstein-tensor components and NEC/WEC contractions for the profile class~\eqref{eq:profiles}, and can regenerate vector illustration PDFs under \texttt{docs/figures/}.
+These helpers support manuscript documentation; they are not required to build or regress the Rust engine.
+Rust \texttt{energy} modules exercise only scaffold quadratic forms for API sanity; manuscript-grade contractions remain SymPy assets when the optional Python layer is used.
 
 \subsection{Sample code snippets analysis}
 \label{sec:snippets}
@@ -246,18 +247,18 @@ Dimension mismatches panic early, which is intentional software hygiene for regr
 \subsection{Build, run, and reproduce the test suite}
 
 \begin{lstlisting}[language={}]
-# Python symbolic / figure layer
+# Rust discrete-operator engine (acceptance gate)
+# Optional on Windows long paths: set CARGO_TARGET_DIR=C:\ctc-target
+cargo build --release
+cargo run --release --bin ctc-engine
+cargo test   # expect 17/17
+
+# Optional Python symbolic / figure layer (documentation only)
 python -m venv .venv
 # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 python scripts/derive_tensors.py
 python scripts/plot_spacetime_diagrams.py
-
-# Rust discrete-operator engine
-# Optional on Windows long paths: set CARGO_TARGET_DIR=C:\ctc-target
-cargo build --release
-cargo run --release --bin ctc-engine
-cargo test
 \end{lstlisting}
 
 Expected outcome of \texttt{cargo test}: \textbf{17/17} unit tests passed, covering
@@ -334,7 +335,7 @@ $128$ & $0.915$ & $0.947$ & $9.9\times 10^{-13}$ & $308$ \\
 
 Running \texttt{cargo run --release --bin ctc-engine} prints a geometry line ($r_{\mathrm{ERGO}}$, $g_{tt}(r_{\mathrm{loop}})$), a homogeneous Picard table with columns
 \texttt{N}, \texttt{rho(K)}, \texttt{L\_osc}, \texttt{residual}, \texttt{iters}, \texttt{||Phi*||\_2} (matching Table~\ref{tab:monodromy} to working precision), an inhomogeneous $\Phi=K\Phi+S$ residual line, and a modular-kernel $\rho(K)$ comparison.
-Figure scripts under \texttt{scripts/plot\_spacetime\_diagrams.py} regenerate ergosurface, light-cone tipping, and geodesic-loop diagrams into \texttt{docs/figures/} for manuscript embedding.
+Figure scripts under \texttt{scripts/plot\_spacetime\_diagrams.py} optionally regenerate ergosurface, light-cone tipping, and geodesic-loop diagrams into \texttt{docs/figures/} for manuscript illustration.
 
 %%==============================================================================
 \section{Impact}

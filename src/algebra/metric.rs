@@ -1,11 +1,11 @@
-//! Generalized Morris–Thorne–like metric with azimuthal/timelike CTC parameter.
+//! Generalized Morris–Thorne–like metric with azimuthal frame-dragging.
 //!
 //! Line element (signature −+++):
 //! ```text
 //! ds² = −e^{2Φ(r)} dt² + dr²/(1−b(r)/r) + r² dθ² + r² sin²θ [dφ − ω(r) dt]²
 //! ```
 //! The shift ω(r) generates frame dragging; when |ω| is large enough that
-//! ∂_φ becomes timelike on a circle of fixed (t,r,θ), a CTC appears.
+//! g_tt > 0 on an equatorial circle of fixed (t,r,θ), an ergoregion appears.
 
 use num_rational::BigRational;
 use num_traits::{One, Zero};
@@ -20,7 +20,7 @@ fn zero_metric() -> MetricRational {
     std::array::from_fn(|_| std::array::from_fn(|_| BigRational::zero()))
 }
 
-/// Placeholder evaluation of a static, equatorial slice of a CTC-capable metric.
+/// Placeholder evaluation of a static, equatorial slice of a frame-dragging metric.
 ///
 /// Parameters (geometric units):
 /// - `r`: radial coordinate
@@ -28,7 +28,7 @@ fn zero_metric() -> MetricRational {
 /// - `phi`: redshift Φ(r)
 /// - `omega`: frame-dragging ω(r)
 /// - `sin_theta`: sin(θ) (1 for equatorial)
-pub fn evaluate_ctc_metric_slice(
+pub fn evaluate_metric_slice(
     r: BigRational,
     b_over_r: BigRational,
     phi: BigRational,
@@ -102,7 +102,7 @@ mod tests {
         let phi = BigRational::zero();
         let omega = BigRational::new(1.into(), 10.into());
         let sin_theta = BigRational::one();
-        let g = evaluate_ctc_metric_slice(r, b_over_r, phi, omega, sin_theta);
+        let g = evaluate_metric_slice(r, b_over_r, phi, omega, sin_theta);
         let det = metric_determinant(&g);
         assert!(det.to_f64().unwrap() < 0.0);
         assert!(det.is_negative());

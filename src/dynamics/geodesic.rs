@@ -1,7 +1,7 @@
 //! Geodesic equations: d²x^λ/dτ² + Γ^λ_{μν} u^μ u^ν = 0.
 //!
 //! Implements 4th-order Runge–Kutta integration with metric-dependent Christoffel
-//! evaluation for the Morris–Thorne CTC geometry.
+//! evaluation for the Morris–Thorne frame-dragging background.
 
 use crate::algebra::christoffel::Christoffel;
 use crate::algebra::metric_numeric::{christoffel_fd, MorrisThorneParams};
@@ -129,21 +129,24 @@ fn clamp_outside_throat(state: &mut GeodesicState, provider: &dyn ChristoffelPro
     state.x[2] = state.x[2].clamp(0.05, std::f64::consts::PI - 0.05);
 }
 
-/// CTC azimuthal loop: timelike tangent u^μ ∝ (1, 0, 0, ω(r)), normalized with g(u,u)=−1.
-pub fn ctc_initial_state(r: f64, omega0: f64, b0: f64, phi0: f64) -> GeodesicState {
-    let p = MorrisThorneParams::ctc_example(r, b0, omega0, phi0);
-    ctc_initial_state_from_params(r, &p)
+/// Co-rotating azimuthal loop: timelike tangent u^μ ∝ (1, 0, 0, ω(r)), normalized with g(u,u)=−1.
+pub fn corotating_initial_state(r: f64, omega0: f64, b0: f64, phi0: f64) -> GeodesicState {
+    let p = MorrisThorneParams::frame_dragging_example(r, b0, omega0, phi0);
+    corotating_initial_state_from_params(r, &p)
 }
 
-/// CTC initial state from explicit metric parameters at radius r.
-pub fn ctc_initial_state_from_params(r: f64, p: &MorrisThorneParams) -> GeodesicState {
+/// Co-rotating initial state from explicit metric parameters at radius r.
+pub fn corotating_initial_state_from_params(r: f64, p: &MorrisThorneParams) -> GeodesicState {
     let theta = std::f64::consts::FRAC_PI_2;
     let (g, _) = crate::algebra::metric_numeric::metric_at(r, theta, p);
     let omega = p.omega;
     let ut = 1.0;
     let uphi = omega;
     let norm = g[0][0] * ut * ut + 2.0 * g[0][3] * ut * uphi + g[3][3] * uphi * uphi;
-    assert!(norm < 0.0, "CTC tangent must be timelike: g(ξ,ξ)={norm}");
+    assert!(
+        norm < 0.0,
+        "co-rotating tangent must be timelike: g(ξ,ξ)={norm}"
+    );
     let scale = (-1.0 / norm).sqrt();
     GeodesicState {
         x: [0.0, r, theta, 0.0],
@@ -158,18 +161,18 @@ mod tests {
 
     #[test]
     fn rk4_integrates_azimuthal_loop() {
-        // PRD reference profile: (r0, γ, α, ω0, β) = (1, 0.5, 0.1, 1.2, 2.0)
+        // Reference profile: (r0, γ, α, ω0, β) = (1, 0.5, 0.1, 1.2, 2.0)
         let prof = ExplicitProfileParams::prd_reference();
         let r_loop = 1.5 * prof.r0;
         let provider = MtChristoffel {
             params_fn: Box::new(move |r| ExplicitProfileParams::prd_reference().at(r)),
         };
         let mt = prof.at(r_loop);
-        let init = ctc_initial_state_from_params(r_loop, &mt);
+        let init = corotating_initial_state_from_params(r_loop, &mt);
         let traj = integrate_geodesic(&provider, &init, 0.01, 200);
         let last = traj.last().unwrap();
         let disp = (last.x[0] - init.x[0]).abs() + (last.x[3] - init.x[3]).abs();
-        assert!(disp > 1e-6, "geodesic must propagate along CTC");
+        assert!(disp > 1e-6, "geodesic must propagate along co-rotating loop");
         assert!((last.x[1] - r_loop).abs() < 0.2);
     }
 }

@@ -26,7 +26,7 @@ pub struct MorrisThorneParams {
 impl MorrisThorneParams {
     /// Constant-Φ, constant-b throat with ω(r) = ω₀/r² (illustrative sample).
     /// Prefer `ExplicitProfileParams` / `explicit_profile` for criterion~(C1) runs.
-    pub fn ctc_example(r: f64, b0: f64, omega0: f64, phi0: f64) -> Self {
+    pub fn frame_dragging_example(r: f64, b0: f64, omega0: f64, phi0: f64) -> Self {
         let omega = omega0 / (r * r);
         let omega_prime = -2.0 * omega0 / (r * r * r);
         Self {
@@ -204,8 +204,8 @@ fn minor_3x3(m: [[f64; DIM]; DIM], row: usize, col: usize) -> f64 {
         + sub[0][2] * (sub[1][0] * sub[2][1] - sub[1][1] * sub[2][0])
 }
 
-/// CTC criterion on equatorial plane: e^{2Φ} < r² ω².
-pub fn ctc_region(r: f64, p: &MorrisThorneParams) -> bool {
+/// Equatorial ergoregion diagnostic: e^{2Φ} < r² ω² (i.e. g_tt > 0 at θ = π/2).
+pub fn ergoregion(r: f64, p: &MorrisThorneParams) -> bool {
     let e2phi = (2.0 * p.phi).exp();
     e2phi < r * r * p.omega * p.omega
 }
@@ -216,15 +216,15 @@ mod tests {
 
     #[test]
     fn metric_has_lorentzian_signature() {
-        let p = MorrisThorneParams::ctc_example(2.0, 1.0, 5.0, -0.05);
+        let p = MorrisThorneParams::frame_dragging_example(2.0, 1.0, 5.0, -0.05);
         let (g, _) = metric_at(2.0, std::f64::consts::FRAC_PI_2, &p);
         let det = det_4x4(g);
         assert!(det < 0.0);
     }
 
     #[test]
-    fn ctc_detected_at_sufficient_omega() {
-        let p = MorrisThorneParams::ctc_example(2.0, 1.0, 10.0, 0.0);
-        assert!(ctc_region(2.0, &p));
+    fn ergoregion_detected_at_sufficient_omega() {
+        let p = MorrisThorneParams::frame_dragging_example(2.0, 1.0, 10.0, 0.0);
+        assert!(ergoregion(2.0, &p));
     }
 }

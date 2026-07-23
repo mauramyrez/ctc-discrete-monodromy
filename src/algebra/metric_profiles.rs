@@ -6,7 +6,7 @@
 //! ω(r)   = ω_0 exp(−β(r−r_0)/r_0)
 //! ```
 
-use super::metric_numeric::{ctc_region, MorrisThorneParams};
+use super::metric_numeric::{ergoregion, MorrisThorneParams};
 
 /// Admissibility parameters for the explicit profile class.
 #[derive(Clone, Debug)]
@@ -19,7 +19,7 @@ pub struct ExplicitProfileParams {
 }
 
 impl ExplicitProfileParams {
-    /// PRD reference profile: CTC opens outside throat, flare-out satisfied.
+    /// Reference profile: ergoregion opens outside throat, flare-out satisfied.
     pub fn prd_reference() -> Self {
         Self {
             r0: 1.0,
@@ -35,34 +35,39 @@ impl ExplicitProfileParams {
         self.gamma > 0.0
     }
 
-    /// CTC opens at throat: e^{−2α} < r_0² ω_0².
-    pub fn ctc_at_throat(&self) -> bool {
+    /// Ergoregion opens at throat: e^{−2α} < r_0² ω_0².
+    pub fn ergoregion_at_throat(&self) -> bool {
         (-2.0 * self.alpha).exp() < self.r0 * self.r0 * self.omega0 * self.omega0
     }
 
-    /// CTC onset radius r_CTC > r_0 (first r > r_0 where e^{2Φ} = r²ω²).
-    pub fn ctc_onset_radius(&self) -> Option<f64> {
+    /// Outer ergosurface radius \(r_{\mathrm{ERGO}}>r_0\) (first exit from
+    /// \(e^{2\Phi}<r^{2}\omega^{2}\) when scanning outward from the throat).
+    pub fn ergosurface_radius(&self) -> Option<f64> {
         let r0 = self.r0;
         let mut lo = r0 * (1.0 + 1e-6);
         let mut hi = r0 * 20.0;
-        if !self.ctc_criterion(lo) {
+        if !self.ergoregion_criterion(lo) {
             return None;
         }
-        for _ in 0..60 {
+        // Require an exterior point outside the ergoregion so the root is bracketed.
+        if self.ergoregion_criterion(hi) {
+            return None;
+        }
+        for _ in 0..80 {
             let mid = 0.5 * (lo + hi);
-            if self.ctc_criterion(mid) {
-                hi = mid;
+            if self.ergoregion_criterion(mid) {
+                lo = mid; // still inside ergoregion: raise lower bracket
             } else {
-                lo = mid;
+                hi = mid; // outside: lower upper bracket
             }
         }
-        Some(hi)
+        Some(0.5 * (lo + hi))
     }
 
     /// e^{2Φ(r)} < r² ω(r)² on equatorial plane.
-    pub fn ctc_criterion(&self, r: f64) -> bool {
+    pub fn ergoregion_criterion(&self, r: f64) -> bool {
         let p = self.at(r);
-        ctc_region(r, &p)
+        ergoregion(r, &p)
     }
 
     /// Evaluate MorrisThorneParams at radius r.
@@ -84,9 +89,9 @@ impl ExplicitProfileParams {
         }
     }
 
-    /// Upper edge of compact exotic-matter domain: r_CTC + δ.
+    /// Upper edge of compact exotic-matter domain: r_ERGO + δ.
     pub fn exotic_domain_upper(&self, delta: f64) -> Option<f64> {
-        self.ctc_onset_radius().map(|r_ctc| r_ctc + delta)
+        self.ergosurface_radius().map(|r_ergo| r_ergo + delta)
     }
 }
 
@@ -95,14 +100,23 @@ mod tests {
     use super::*;
 
     #[test]
-    fn flare_out_and_ctc_admissibility() {
+    fn flare_out_and_ergoregion_admissibility() {
         let p = ExplicitProfileParams::prd_reference();
         assert!(p.flare_out_satisfied());
-        assert!(p.ctc_at_throat());
-        let r_ctc = p
-            .ctc_onset_radius()
-            .expect("CTC should open outside throat");
-        assert!(r_ctc > p.r0);
+        assert!(p.ergoregion_at_throat());
+        let r_ergo = p
+            .ergosurface_radius()
+            .expect("ergoregion should open outside throat");
+        assert!(r_ergo > p.r0);
+        assert!(p.ergoregion_criterion(1.05 * p.r0));
+        assert!(!p.ergoregion_criterion(1.5 * p.r0));
+        assert!(r_ergo > 1.05 * p.r0 && r_ergo < 1.5 * p.r0);
+        let mt = p.at(r_ergo);
+        let residual = (2.0 * mt.phi).exp() - r_ergo * r_ergo * mt.omega * mt.omega;
+        assert!(
+            residual.abs() < 5e-4,
+            "ergosurface residual {residual} at r={r_ergo}"
+        );
     }
 
     #[test]

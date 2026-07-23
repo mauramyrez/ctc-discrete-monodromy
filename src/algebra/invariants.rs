@@ -1,6 +1,6 @@
 //! Curvature / metric invariant reports for high-precision stress tests.
 
-use super::metric::{evaluate_ctc_metric_slice, metric_determinant};
+use super::metric::{evaluate_metric_slice, metric_determinant};
 use anyhow::Result;
 use num_rational::BigRational;
 use num_traits::{One, Zero};
@@ -13,7 +13,7 @@ pub fn sample_metric_report() -> Result<String> {
     let omega = BigRational::new(1.into(), 5.into());
     let sin_theta = BigRational::one();
 
-    let g = evaluate_ctc_metric_slice(r, b_over_r, phi.clone(), omega, sin_theta);
+    let g = evaluate_metric_slice(r, b_over_r, phi.clone(), omega, sin_theta);
     let det = metric_determinant(&g);
 
     let e2phi_note = redshift_factor_note(&phi);

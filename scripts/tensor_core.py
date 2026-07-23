@@ -1,4 +1,4 @@
-"""Shared symbolic tensor calculus for the rotating CTC Morris–Thorne metric."""
+"""Shared symbolic tensor calculus for the rotating frame-dragging Morris–Thorne metric."""
 
 from __future__ import annotations
 
@@ -70,21 +70,21 @@ def throat_flare_out_condition() -> sp.Expr:
     return sp.diff(b, R).subs(R, R0)
 
 
-def ctc_criterion_explicit() -> sp.Expr:
-    """Equatorial CTC inequality: e^{2Φ} − r²ω² < 0."""
+def ergoregion_criterion_explicit() -> sp.Expr:
+    """Equatorial ergoregion inequality: e^{2Φ} − r²ω² < 0 (i.e. g_tt > 0)."""
     prof = explicit_metric_profiles()
     return sp.exp(2 * prof["Phi"]) - R**2 * prof["omega"] ** 2
 
 
-def ctc_onset_at_throat() -> sp.Expr:
-    """Evaluate CTC criterion at r = r_0."""
-    return ctc_criterion_explicit().subs(R, R0)
+def ergoregion_onset_at_throat() -> sp.Expr:
+    """Evaluate ergoregion criterion at r = r_0."""
+    return ergoregion_criterion_explicit().subs(R, R0)
 
 
 def energy_violation_domain_upper() -> sp.Expr:
-    """Upper edge r_{CTC} + δ of compact exotic-matter domain."""
-    r_ctc = symbols("r_CTC", positive=True, real=True)
-    return r_ctc + DELTA
+    """Upper edge r_{ERGO} + δ of compact exotic-matter domain."""
+    r_ergo = symbols("r_ERGO", positive=True, real=True)
+    return r_ergo + DELTA
 
 
 def parameter_admissibility_bounds() -> list[tuple[str, sp.Basic]]:
@@ -93,19 +93,16 @@ def parameter_admissibility_bounds() -> list[tuple[str, sp.Basic]]:
 
     Returns list of (description, condition) pairs for LaTeX export.
     """
-    prof = explicit_metric_profiles()
-    b_prime_throat = throat_flare_out_condition()
-    ctc_throat = ctc_onset_at_throat()
     return [
         (r"Flare-out at throat ($b'(r_0) = -\gamma < 1$)", sp.Gt(GAMMA, 0)),
         (
-            r"CTC opens at throat ($e^{-2\alpha} < r_0^2 \omega_0^2$)",
+            r"Ergoregion opens at throat ($e^{-2\alpha} < r_0^2 \omega_0^2$)",
             sp.Lt(sp.exp(-2 * ALPHA), R0**2 * OMEGA0**2),
         ),
         (r"Finite redshift at infinity ($\alpha \ge 0$)", sp.Ge(ALPHA, 0)),
         (r"Localized dragging ($\beta > 0$)", sp.Gt(BETA, 0)),
         (
-            r"Exotic matter domain $[r_0,\, r_{\mathrm{CTC}}+\delta]$",
+            r"Exotic matter domain $[r_0,\, r_{\mathrm{ERGO}}+\delta]$",
             sp.And(sp.Gt(DELTA, 0), sp.Gt(GAMMA, 0)),
         ),
     ]
@@ -115,7 +112,7 @@ def build_metric(equatorial: bool = False) -> tuple[Matrix, tuple, dict]:
     """
     Construct g_{μν} for the modified Morris–Thorne metric with frame dragging.
 
-    If equatorial=True, set θ = π/2 (sin θ = 1) for the CTC azimuthal loop.
+    If equatorial=True, set θ = π/2 (sin θ = 1) for the azimuthal sampling loop.
     """
     Phi, b, omega = metric_functions()
     e2Phi = sp.exp(2 * Phi)

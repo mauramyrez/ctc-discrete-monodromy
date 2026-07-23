@@ -2,10 +2,16 @@
 name = "ctc-research-framework"
 version = "0.1.0"
 edition = "2021"
-authors = ["Mauricio Miguel Paniagua Ramirez"]
+authors = ["Mauricio Miguel Paniagua Ramirez <1912574a@umich.mx>"]
 description = "High-performance Rust framework for discrete operator diagnostics, symbolic metric export, and spectral stability analysis on axisymmetric background profiles (inhomogeneous Φ=KΦ+S and modular kernels)"
 license = "MIT"
 readme = "README.md"
+repository = "https://github.com/mauramyrez/ctc-discrete-monodromy"
+homepage = "https://github.com/mauramyrez/ctc-discrete-monodromy"
+documentation = "https://github.com/mauramyrez/ctc-discrete-monodromy#readme"
+keywords = ["scientific-computing", "spectral-methods", "monodromy", "relativity", "benchmarking"]
+categories = ["science", "mathematics", "simulation"]
+exclude = ["docs/_fetch/*", "docs/iopjournal.cls", "docs/softwarex-software-update-template.tex", "docs/*.spl"]
 
 [features]
 default = []
