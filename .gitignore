@@ -1,0 +1,31 @@
+# Rust / Python build artifacts
+/target/
+/.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+
+# Editor / OS / local AI tooling
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+.cursorrules
+.cursor/
+
+# LaTeX auxiliaries
+docs/*.aux
+docs/*.bbl
+docs/*.blg
+docs/*.log
+docs/*.out
+docs/*.toc
+docs/*.fls
+docs/*.fdb_latexmk
+docs/*.synctex.gz
+docs/paper.pdf
+
+# Keep vector figures; ignore accidental rasters if huge
+docs/figures/*.png

@@ -1,0 +1,50 @@
+[package]
+name = "ctc-research-framework"
+version = "0.1.0"
+edition = "2021"
+authors = ["Mauricio Miguel Paniagua Ramirez"]
+description = "Discrete Yukawa-proxy monodromy M_N and Novikov Banach–Picard verification on axisymmetric frame-dragging wormhole backgrounds (criteria C1–C3); SymPy tensor exports are companion assets (C2); Hadamard bound is EFT outlook only (C4)"
+license = "MIT"
+readme = "README.md"
+
+[features]
+default = []
+# Enable high-precision MPFR via rug (requires system GMP/MPFR; nontrivial on Windows)
+high-prec = ["dep:rug"]
+
+[dependencies]
+# Arbitrary-precision rational arithmetic (exact fractions; no FP rounding)
+num-rational = "0.4"
+num-traits = "0.2"
+num-bigint = "0.4"
+
+# High-precision floating point (optional; enable with --features high-prec)
+rug = { version = "1.24", optional = true, default-features = true, features = ["float", "complex", "integer", "rational"] }
+
+# Dense linear algebra for geodesic Jacobians / T_{μν} samples
+nalgebra = "0.33"
+
+# Serialization of invariant reports
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+[dev-dependencies]
+approx = "0.5"
+proptest = "1.5"
+
+[[bin]]
+name = "ctc-engine"
+path = "src/main.rs"
+
+[lib]
+name = "ctc_research_framework"
+path = "src/lib.rs"
+
+[profile.release]
+lto = true
+codegen-units = 1
+opt-level = 3

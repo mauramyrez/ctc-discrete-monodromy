@@ -1,0 +1,23 @@
+# CTC Research Framework — Python symbolic / numerical stack
+# Pin versions for bit-for-bit reproducibility of symbolic exports.
+
+# Core symbolic / numeric
+sympy==1.13.3
+numpy==2.1.3
+scipy==1.14.1
+
+# Relativistic tensor calculus (optional; SymPy is primary)
+einsteinpy==0.4.0
+
+# Visualization (vector spacetime / conformal diagrams)
+matplotlib==3.9.2
+
+# High-precision floats for SymPy / verification
+mpmath==1.3.0
+
+# Development / notebook (optional)
+ipython==8.29.0
+jupyter==1.1.1
+
+# Testing
+pytest==8.3.3

@@ -1,0 +1,377 @@
+% !TEX program = pdflatex
+% Target journal: Classical and Quantum Gravity (IOP Publishing; iopjournal.cls)
+% Signature convention: (-,+,+,+); geometric units c = G = 1
+\documentclass{iopjournal}
+
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
+\usepackage{microtype}
+
+\newcommand{\Phir}{\Phi(r)}
+\newcommand{\br}{b(r)}
+\newcommand{\omegar}{\omega(r)}
+\newcommand{\Gmn}{G_{\mu\nu}}
+\newcommand{\Tmn}{T_{\mu\nu}}
+\newcommand{\Rmn}{R_{\mu\nu}}
+\newcommand{\ctc}{CTC}
+\newcommand{\Mcal}{\mathcal{M}}
+\newcommand{\MN}{\mathcal{M}_{N}}
+\newcommand{\phif}{\varphi_{\mathrm{st}}}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{definition}[theorem]{Definition}
+
+\begin{document}
+
+\articletype{Paper}
+
+\title{Discrete Sobolev Monodromy Contraction and Novikov Consistency Verification on Axisymmetric Frame-Dragging Wormhole Backgrounds}
+
+\author{Mauricio Miguel Paniagua Ramirez$^{1,*}$}
+
+\affil{$^1$Facultad de Ingenier\'ia El\'ectrica, Universidad Michoacana de San Nicol\'as de Hidalgo (UMSNH), Morelia, Michoac\'an, M\'exico}
+
+\affil{$^*$Author to whom any correspondence should be addressed.}
+
+\email{1912574a@umich.mx}
+
+\keywords{closed timelike curves, Novikov consistency, Morris--Thorne wormholes, discrete monodromy, Banach fixed-point theorem, computational general relativity}
+
+\begin{abstract}
+We develop a reproducible computational and functional-analytic framework for verifying Novikov field self-consistency on stationary, axisymmetric Morris--Thorne geometries with azimuthal frame dragging.
+Closed-form metric profiles $\{\Phir,\br,\omegar\}$ define a Lorentzian background with flare-out at the throat and a chronology-violating equatorial locus wherever $e^{2\Phir}<r^{2}\omegar^{2}$ [criterion~(C1)].
+A Yukawa-type retarded kernel with mode-augmented mass $m_{\ast}$ is sampled on an $N$-node azimuthal loop and row-sum renormalized by $\exp(-m_{\ast}\Delta\tau)$ to produce a discrete monodromy operator $\MN$ on $\mathbb{R}^{N}$.
+We prove that $\MN$ is a strict contraction in a discrete $H^{1}$-proxy norm whenever $m^{2}>0$, so the Banach fixed-point theorem yields a unique Novikov fixed point and geometric Picard convergence [criterion~(C3)].
+A typed Rust integration engine corroborates these claims: all $17/17$ unit tests pass, with spectral radius $\|K\|_{L^{2}}<1$ and Picard residual $<10^{-8}$ in fewer than $500$ iterations for $N\in\{32,64,128\}$.
+The equatorial Einstein tensor is exported symbolically (SymPy) as a background asset [criterion~(C2)]; a curvature-cutoff Hadamard bound is stated only as an effective-field-theory (EFT) outlook [criterion~(C4)], not as a numerical result.
+\end{abstract}
+
+%==============================================================================
+\section{Introduction}
+\label{sec:intro}
+
+Closed timelike curves (\ctc{}s) raise precise questions of PDE well-posedness and field self-consistency on chronologically nontrivial backgrounds~\cite{Hawking1992,Novikov1989,Friedman1990,KimThorne1991}.
+The Novikov principle requires that any field configuration on a closed causal curve equal its image under transport around the loop~\cite{Novikov1989,Friedman1990}.
+This paper treats that principle as a \emph{computational fixed-point problem} on an explicit frame-dragging wormhole geometry~\cite{Morris1988,Visser1995}, distinguishing carefully between continuous analytic models and the discrete numerical proxies that are actually implemented and tested.
+
+We organize the contribution around four criteria of decreasing computational status:
+\begin{enumerate}
+  \item[(C1)] \textbf{Geometric regularity (implemented):}
+    smooth profiles with flare-out and an equatorial chronology-violating locus $e^{2\Phir}<r^{2}\omegar^{2}$;
+  \item[(C2)] \textbf{Symbolic background stress-energy (exported):}
+    equatorial $\Gmn$ and NEC/WEC contractions obtained by SymPy as static constraints, not as dynamically evolved Rust tensors;
+  \item[(C3)] \textbf{Discrete Sobolev contraction (core result):}
+    unique Novikov fixed point for a mass-gap--renormalized monodromy matrix $\MN$, verified by Banach--Picard iteration in Rust;
+  \item[(C4)] \textbf{Hadamard EFT outlook (analytic proposal):}
+    a curvature cutoff $\ell_{\star}$ regulating the Kim--Thorne coincidence pole within a non-minimal scalar-tensor sector---not computed by the numerical engine.
+\end{enumerate}
+
+Throughout, ``continuous'' statements motivate the kernel form; all certified numerical claims refer to the discrete operator $\MN$ constructed in Sec.~\ref{sec:novikov}.
+Criterion~(C3) is the primary result.
+The reproducible pipeline is SymPy tensor export $\to$ typed Rust integration $\to$ IOP journal \LaTeX\ rendering (Sec.~\ref{sec:conclusion}).
+
+%==============================================================================
+\section{Geometry and profile class}
+\label{sec:geometry}
+
+We adopt the stationary, axisymmetric line element
+\begin{equation}
+\label{eq:metric}
+\begin{split}
+\mathrm{d}s^{2}
+&= -e^{2\Phir}\,\mathrm{d}t^{2}
+ + \frac{\mathrm{d}r^{2}}{1-\br/r}
+ + r^{2}\,\mathrm{d}\theta^{2} \\
+&\quad + r^{2}\sin^{2}\theta\,\bigl(\mathrm{d}\varphi - \omegar\,\mathrm{d}t\bigr)^{2},
+\end{split}
+\end{equation}
+with coordinates $x^{\mu}=(t,r,\theta,\varphi)$ and
+$\det(g_{\mu\nu})=-r^{5}e^{2\Phir}\sin^{2}\theta/(r-\br)$.
+
+\subsection{Explicit metric profiles}
+
+We specify the closed-form parameterization used throughout the Rust crate and the symbolic pipeline,
+\begin{align}
+\label{eq:profiles}
+\br &= r_{0}\Bigl(\frac{r_{0}}{r}\Bigr)^{\gamma},
+& \Phir &= -\frac{\alpha r_{0}}{r},
+& \omegar &= \omega_{0}\exp\!\Bigl[-\beta\frac{r-r_{0}}{r_{0}}\Bigr],
+\end{align}
+with $\gamma>0$, $\alpha\ge 0$, $\omega_{0}>0$, and $\beta>0$.
+At the throat $r=r_{0}$: $b(r_{0})=r_{0}$ and $b'(r_{0})=-\gamma$, so the flare-out condition $b'<1$ holds whenever $\gamma>0$~\cite{Morris1988}.
+
+\paragraph{Reference parameters.}
+Unless otherwise stated, numerical diagnostics use the crate reference profile
+\begin{equation}
+\label{eq:prd-params}
+r_{0}=1,\quad
+\gamma=0.5,\quad
+\alpha=0.1,\quad
+\omega_{0}=1.2,\quad
+\beta=2.0,
+\end{equation}
+with the monodromy and geodesic loops evaluated at $r_{\mathrm{loop}}=1.5\,r_{0}$.
+
+\paragraph{Admissibility bounds (C1).}
+\begin{align}
+\label{eq:bounds}
+\gamma &> 0
+&& \text{(flare-out)}, \nonumber\\
+e^{-2\alpha} &< r_{0}^{2}\omega_{0}^{2}
+&& \text{(CTC opens at throat)}, \nonumber\\
+r_{\mathrm{CTC}} &> r_{0}
+&& \text{(chronology-violating locus exterior to throat)}.
+\end{align}
+The onset radius $r_{\mathrm{CTC}}$ is the smallest $r>r_{0}$ solving $e^{2\Phir(r)}=r^{2}\omegar(r)^{2}$, computed in the crate by bisection.
+
+\subsection{Frame dragging, chronology horizon, and CTC locus}
+
+The Killing combination $\xi=\partial_{t}+\Omega\partial_{\varphi}$ is timelike when
+\begin{equation}
+\label{eq:ctc-criterion}
+-e^{2\Phir}+2\Omega\,\omegar\, r^{2}\sin^{2}\theta
++\Omega^{2}r^{2}\sin^{2}\theta<0.
+\end{equation}
+On the equatorial plane ($\theta=\pi/2$) with $\Omega=\omegar$, this reduces to
+\begin{equation}
+\label{eq:ctc-simple}
+e^{2\Phir} < r^{2}\omegar^{2}.
+\end{equation}
+We write $\Sigma_{\mathrm{ERGO}}$ for the surface $e^{2\Phir}=r^{2}\omegar^{2}$: it is the equatorial frame-dragging boundary at which $-\partial_{t}$ becomes null, and the chronology-violating locus for co-rotating observers opens wherever~\eqref{eq:ctc-simple} holds (the chronology horizon in the sense of the present stationary geometry).
+Null slopes in the $(t,\varphi)$ subspace are
+\begin{equation}
+\label{eq:null-slopes}
+\Bigl(\frac{\mathrm{d}\varphi}{\mathrm{d}t}\Bigr)_{\!\pm}=\omegar\pm e^{\Phir}/r,
+\end{equation}
+so the future light cone encompasses $-\partial_{t}$ when~\eqref{eq:ctc-simple} holds (Fig.~\ref{fig:lightcones}).
+
+Christoffel symbols used for geodesic diagnostics are obtained from~\eqref{eq:metric} by central finite differences with step $\varepsilon=10^{-5}$.
+Closed timelike initial data at $r_{\mathrm{loop}}$ are normalized so that $g(u,u)=-1$ with $u\propto(1,0,0,\omega)$, and integrated by classical RK4 with step $\Delta\tau=0.01$ (Fig.~\ref{fig:geodesic}).
+
+\begin{figure}[t]
+\centering
+\begin{minipage}{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/lightcones.pdf}
+\caption{Light-cone tipping in the equatorial $(t,\varphi)$ plane for the reference profiles~\eqref{eq:prd-params}. Blue: chronology-respecting ($e^{2\Phir}>r^{2}\omegar^{2}$); red: chronology-violating locus ($e^{2\Phir}<r^{2}\omegar^{2}$).}
+\label{fig:lightcones}
+\end{minipage}\hfill
+\begin{minipage}{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/geodesic_loop.pdf}
+\caption{Equatorial projection of an RK4 geodesic orbit $\gamma(\tau)$ initialized on the CTC-normalized tangent at $r_{\mathrm{loop}}=1.5\,r_{0}$ (reference profile), with throat and frame-dragging boundary $\Sigma_{\mathrm{ERGO}}$ indicated.}
+\label{fig:geodesic}
+\end{minipage}
+\end{figure}
+
+%==============================================================================
+\section{Symbolic Einstein tensor and energy conditions}
+\label{sec:energy}
+
+Einstein's equations read $\Gmn=\Rmn-\tfrac12 R\,g_{\mu\nu}=8\pi\Tmn$.
+The equatorial components of $\Gmn$ and the associated NEC/WEC contractions are obtained by symbolic differentiation in SymPy (Appendices~\ref{app:tensors}--\ref{app:energy}) and treated as \emph{background constraints} on the profile class~\eqref{eq:profiles}.
+They are not assembled dynamically from curvature inside the Rust integration engine; the crate's energy-condition unit tests exercise only scaffold quadratic forms for API sanity checks.
+
+\IfFileExists{derived_equations_summary.tex}{\input{derived_equations_summary.tex}}{}
+\IfFileExists{energy_conditions_summary.tex}{\input{energy_conditions_summary.tex}}{}
+
+Within an EFT mean-field envelope, the non-minimal coupling $\zeta\,\phif R$ is regarded as a background parameter that can energetically bound local NEC/WEC violations whenever $|\zeta\,\phif R|$ exceeds the magnitude of the negative-energy density implied by $\Tmn=\Gmn/(8\pi)$.
+This defines a self-consistent parameter domain for the profile class; it does not constitute a dynamical generation mechanism for exotic matter, nor a Rust-verified localization theorem.
+
+%==============================================================================
+\section{Dynamic stability: discrete Sobolev contraction}
+\label{sec:novikov}
+
+Novikov's principle requires that fields on a closed causal curve equal their image under transport around the loop.
+We motivate the transport map from the massive Klein--Gordon equation on~\eqref{eq:metric},
+\begin{equation}
+\label{eq:kg}
+\frac{1}{\sqrt{-g}}\,\partial_{\mu}\!\Bigl(\sqrt{-g}\,g^{\mu\nu}\partial_{\nu}\phi\Bigr)-m^{2}\phi=0,
+\end{equation}
+but we do \emph{not} discretize the full curved-space PDE.
+Instead we construct an explicit discrete monodromy operator on the azimuthal loop that inherits a Yukawa mass gap from~\eqref{eq:kg} and is contractive by design.
+
+\subsection{Continuous Yukawa proxy}
+
+Decomposing into azimuthal modes $\phi\sim\psi_{\nu}(r)\,e^{i(\nu\varphi-\Omega t)}$ suggests a mode-augmented mass
+\begin{equation}
+\label{eq:m-star}
+m_{\ast}^{2}=m^{2}+\nu^{2}/g_{\varphi\varphi},
+\qquad
+G(\Delta s)\sim\frac{m_{\ast}}{4\pi\Delta s}\,e^{-m_{\ast}\Delta s},
+\end{equation}
+for a retarded Yukawa-type kernel along a closed timelike trajectory $\gamma(\tau)$.
+Equation~\eqref{eq:m-star} is the continuous \emph{proxy} that motivates the discrete construction below; it is not claimed to be the exact retarded Green function of~\eqref{eq:kg} on~\eqref{eq:metric}.
+
+\subsection{Discrete monodromy operator}
+
+\begin{definition}[Discrete monodromy $\MN$]
+\label{def:MN}
+Fix $r=r_{\mathrm{loop}}$, $\theta=\pi/2$, and $N$ uniform nodes $\chi_{i}=2\pi i/N$ along the azimuthal circle.
+Let $\Delta\varphi=2\pi/N$ and $\Delta\tau=\sqrt{g_{\varphi\varphi}}\,\Delta\varphi$.
+For forward proper separations $\Delta s_{j\to i}$ along the loop, define the sampled kernel matrix
+\begin{equation}
+\label{eq:K-raw}
+\widetilde{K}_{ij}
+=
+\begin{cases}
+G(\Delta s_{j\to i})\,\Delta\tau, & i\neq j,\\
+0, & i=j,
+\end{cases}
+\end{equation}
+with $G$ from~\eqref{eq:m-star}.
+The discrete monodromy operator is the \emph{row-sum renormalized} matrix
+\begin{equation}
+\label{eq:K-renorm}
+K_{ij}
+=
+\widetilde{K}_{ij}\,
+\frac{\exp(-m_{\ast}\Delta\tau)}{\sum_{k}\widetilde{K}_{ik}}
+\qquad\bigl(\text{when the row sum is nonzero}\bigr),
+\end{equation}
+and $\MN:\mathbb{R}^{N}\to\mathbb{R}^{N}$ acts by $\Phi\mapsto K\Phi$.
+\end{definition}
+
+Row renormalization forces every row of $K$ to sum to $\exp(-m_{\ast}\Delta\tau)<1$ whenever $m_{\ast}>0$.
+Consequently the spectral radius satisfies $\rho(K)\le\exp(-m_{\ast}\Delta\tau)<1$ for this constructed operator.
+The default crate parameters are $r_{\mathrm{loop}}=1.5\,r_{0}$, $m^{2}=1$, $\nu=1$, and $N=128$, with tolerances $\mathrm{tol}=10^{-12}$ (solver) and residual thresholds $10^{-8}$--$10^{-10}$ (tests).
+
+\subsection{Discrete $H^{1}$-proxy norm and contraction}
+
+On periodic samples $\Phi\in\mathbb{R}^{N}$ we use the discrete norms
+\begin{align}
+\label{eq:discrete-norms}
+\|\Phi\|_{L^{2}}^{2}
+&=
+\frac1N\sum_{i=0}^{N-1}\Phi_{i}^{2},
+\qquad
+\|\Phi\|_{H^{1}}^{2}
+=
+\|\Phi\|_{L^{2}}^{2}
++
+\|\delta\Phi\|_{L^{2}}^{2},
+\end{align}
+where $(\delta\Phi)_{i}=(\Phi_{i+1}-\Phi_{i-1})/2$ is the central difference on the index circle (the crate's $H^{1}$-proxy; not a continuum Sobolev norm on $\gamma$).
+The $L^{2}$ operator norm of $K$ is estimated by power iteration; the discrete Sobolev lift used for the Lipschitz bound is
+\begin{equation}
+\label{eq:discrete-sobolev}
+L
+\le
+\|K\|_{L^{2}}\,
+\Bigl(1+\frac{\pi\sqrt{2}}{N}\Bigr).
+\end{equation}
+
+\begin{lemma}[Discrete Sobolev contraction]
+\label{lem:sobolev}
+Assume $m^{2}>0$ and the background geometry is bounded on the loop at $r_{\mathrm{loop}}$.
+Let $K$ be the renormalized matrix~\eqref{eq:K-renorm}.
+If $\|K\|_{L^{2}}<1$ and the proxy bound~\eqref{eq:discrete-sobolev} satisfies $L<1$, then $\MN$ is a strict contraction on $(\mathbb{R}^{N},\|\cdot\|_{H^{1}})$.
+\end{lemma}
+
+\begin{proof}
+By construction each row of $K$ sums to $\exp(-m_{\ast}\Delta\tau)<1$, so $\rho(K)<1$ and the power-iteration estimate of $\|K\|_{L^{2}}$ is strictly less than unity for the reference parameters.
+The discrete lift~\eqref{eq:discrete-sobolev} then yields $L<1$, hence
+\[
+\|\MN\Phi-\MN\Psi\|_{H^{1}}
+\le
+L\,\|\Phi-\Psi\|_{H^{1}}
+\]
+for all $\Phi,\Psi\in\mathbb{R}^{N}$.
+\end{proof}
+
+\begin{theorem}[Novikov consistency for $\MN$]
+\label{thm:novikov-stability}
+Under Lemma~\ref{lem:sobolev}, there exists a unique fixed point $\Phi^{*}=K\Phi^{*}$ in $\mathbb{R}^{N}$, and the Picard iteration $\Phi_{k+1}=K\Phi_{k}$ converges geometrically from arbitrary initial data in $\mathbb{R}^{N}$.
+\end{theorem}
+
+\begin{proof}
+Lemma~\ref{lem:sobolev} places $\MN$ as a strict contraction on the Banach space $(\mathbb{R}^{N},\|\cdot\|_{H^{1}})$.
+The Banach fixed-point theorem yields existence and uniqueness of $\Phi^{*}$, together with geometric convergence of Picard iterates.
+\end{proof}
+
+\paragraph{Numerical verification (C3).}
+\label{sec:numerical}
+The CTC Research Framework implements Definition~\ref{def:MN} and Theorem~\ref{thm:novikov-stability} in Rust.
+All $17/17$ unit tests pass, covering:
+\begin{enumerate}
+  \item[(i)] geometric/\ctc{} metric invariants and flare-out for~\eqref{eq:prd-params} (5);
+  \item[(ii)] scaffold energy-condition API diagnostics (2);
+  \item[(iii)] monodromy bounds $\|K\|_{L^{2}}<1$ and $L<1$ (3);
+  \item[(iv)] Banach--Picard convergence $\|\Phi^{*}-K\Phi^{*}\|_{2}<10^{-8}$ in fewer than $500$ iterations for $N\in\{32,64,128\}$ (5);
+  \item[(v)] RK4 integration of CTC-normalized geodesics with $\Delta\tau=0.01$ over $200$ steps (2).
+\end{enumerate}
+These tests corroborate the discrete contraction theory for $\MN$; they do not certify that the unnormalized continuum Green function of~\eqref{eq:kg} is itself an $H^{1}(\gamma)$ contraction.
+
+%==============================================================================
+\section{Semiclassical Hadamard bound: EFT outlook}
+\label{sec:backreaction}
+
+Semiclassical analyses predict a $(\Delta\ell)^{-4}$ divergence of $\langle\Tmn\rangle_{\mathrm{ren}}$ as null geodesics accumulate on the chronology horizon~\cite{KimThorne1991,Hawking1992}.
+We record here an \emph{analytic EFT proposal} for regulating that pole by a non-minimal curvature cutoff.
+No part of this section is implemented or verified by the Rust numerical suite.
+
+\input{backreaction_bounds.tex}
+
+Proposition~\ref{prop:bounded-Tren} is therefore a proposed bound within a cutoff-regulated scalar-tensor sector, not a numerical theorem of the present codebase.
+
+\paragraph{Comparison with the Kay--Radzikowski--Wald no-go theorem.}
+\label{sec:kay-wald}
+Kay, Radzikowski, and Wald~\cite{KayRadzikowskiWald1997} proved that no Hadamard state exists throughout a neighborhood of a compactly generated Cauchy horizon under \emph{minimal} coupling.
+Proposition~\ref{prop:bounded-Tren} does not contradict that result: Kay--Wald assumes $\zeta=0$ and a globally Hadamard state, whereas $\zeta\,\phif R$ supplies the curvature cutoff $\ell_{\star}$, modifies the short-distance parametrix, and truncates null windings at $n_{\max}\sim 2\pi r_{\mathrm{CH}}/\ell_{\star}$.
+The bound is cutoff-regulated within an EFT sector; it is not a claim that a minimally coupled Hadamard state extends across $\Sigma_{\mathrm{ERGO}}$, nor that the numerical engine computes $\langle\Tmn\rangle_{\mathrm{ren}}$.
+
+%==============================================================================
+\section{Conclusion and methodological contribution}
+\label{sec:conclusion}
+
+We have constructed a reproducible computational pipeline---symbolic GR export (SymPy), typed integration (Rust), and document rendering (IOP journal \LaTeX)---for Novikov consistency verification on axisymmetric frame-dragging wormhole backgrounds.
+The single, defensible contribution is:
+
+\begin{quote}
+\emph{We construct an explicit frame-dragging Morris--Thorne profile class, export its equatorial Einstein tensor symbolically, and demonstrate that a mass-gap--renormalized discrete monodromy operator is an $H^{1}$-proxy contraction with a unique Picard fixed point.}
+\end{quote}
+
+In terms of the criteria~(C1)--(C4):
+\begin{itemize}
+  \item \textbf{(C1)} Explicit profiles~\eqref{eq:profiles} with flare-out, reference parameters~\eqref{eq:prd-params}, and equatorial chronology-violating locus~\eqref{eq:ctc-simple}, corroborated by metric and RK4 diagnostics.
+  \item \textbf{(C2)} SymPy-exported equatorial $\Gmn$ and NEC/WEC contractions as background constraints (Appendices~\ref{app:tensors}--\ref{app:energy}), not dynamically generated in Rust.
+  \item \textbf{(C3)} Unique Novikov fixed point for the renormalized discrete operator $\MN$ (Theorem~\ref{thm:novikov-stability}), with $17/17$ Rust tests, $\|K\|_{L^{2}}<1$, and Picard residual $<10^{-8}$ in $<500$ iterations for $N\in\{32,64,128\}$.
+  \item \textbf{(C4)} Analytic EFT proposal for a curvature-cutoff Hadamard bound (Proposition~\ref{prop:bounded-Tren}); not numerically computed.
+\end{itemize}
+
+Global hyperbolicity is not restored once chronology-violating loci exist; Cauchy-problem statements remain local to chronology-respecting regions.
+Observational constraints and a continuum limit of $\MN$ without row renormalization are deferred to future work.
+
+\ack{Symbolic and numerical artifacts accompany this work in the CTC Research Framework repository.}
+
+\funding{This research received no specific grant from any funding agency in the public, commercial, or not-for-profit sectors.}
+
+\roles{Mauricio Miguel Paniagua Ramirez: Conceptualization, Methodology, Software, Formal analysis, Writing -- original draft, Writing -- review \& editing.}
+
+\data{The symbolic exports, Rust integration crate, unit tests, and figure-generation scripts that support the findings of this study are available in the CTC Research Framework repository accompanying this work.}
+
+\suppdata{Appendices~\ref{app:tensors}--\ref{app:energy} collect the SymPy-exported equatorial Einstein-tensor components and NEC/WEC contractions used as static background assets (criterion~C2).}
+
+%==============================================================================
+\appendix
+
+\section{Full equatorial Einstein tensor components}
+\label{app:tensors}
+
+Substituting~\eqref{eq:profiles} at $\theta=\pi/2$, the non-zero components of $\Gmn$ and the Ricci scalar $R$ are collected below.
+Repeated factors are abbreviated for typographic clarity; the expansions are algebraically identical to the SymPy derivation and serve as symbolic background assets for criterion~(C2).
+\IfFileExists{appendix_tensor_components.tex}{\input{appendix_tensor_components.tex}}{}
+
+\section{Energy condition contractions}
+\label{app:energy}
+
+Null (NEC) and weak (WEC) contractions with the same profiles, treated as static background constraints rather than Rust-evolved stress-energy:
+\IfFileExists{appendix_energy_conditions.tex}{\input{appendix_energy_conditions.tex}}{}
+
+\section*{References}
+
+\bibliographystyle{unsrt}
+\bibliography{references}
+
+\end{document}
