@@ -74,7 +74,7 @@
 %Headers and footers
 \pagestyle{fancy}
 \fancyhfoffset[L]{27mm}
-\fancyhead[L]{{\small \sf IOP Publishing}\hspace{5mm} {\it Class. Quantum Grav.} {\bf vv} (yyyy) aaaaaa}
+\fancyhead[L]{{\small \sf IOP Publishing}\hspace{5mm} {\it Class. Quantum Grav.} {\bf vv} (2026) aaaaaa}
 \fancyhead[C]{}
 \fancyhead[R]{Paniagua Ramirez\ }
 \fancyfoot[LR]{}
