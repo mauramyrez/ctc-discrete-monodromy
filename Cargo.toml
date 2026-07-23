@@ -3,7 +3,7 @@ name = "ctc-research-framework"
 version = "0.1.0"
 edition = "2021"
 authors = ["Mauricio Miguel Paniagua Ramirez"]
-description = "Discrete Yukawa-proxy monodromy M_N and Novikov Banach–Picard verification on axisymmetric frame-dragging wormhole backgrounds (criteria C1–C3); SymPy tensor exports are companion assets (C2); Hadamard bound is EFT outlook only (C4)"
+description = "High-performance Rust framework for discrete operator diagnostics, symbolic metric export, and spectral stability analysis on axisymmetric background profiles (inhomogeneous Φ=KΦ+S and modular kernels)"
 license = "MIT"
 readme = "README.md"
 

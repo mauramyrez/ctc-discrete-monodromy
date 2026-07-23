@@ -1,26 +1,32 @@
-# Discrete Sobolev Monodromy Contraction and Novikov Consistency Verification on Axisymmetric Frame-Dragging Wormhole Backgrounds
+# ctc-discrete-monodromy
 
-Computational companion to the IOP Classical and Quantum Gravity manuscript of the same title: symbolic GR export (SymPy), typed discrete monodromy integration (Rust), and figure generation (Matplotlib).
+A high-performance Rust framework for discrete operator diagnostics, symbolic metric export, and spectral stability analysis on axisymmetric background profiles.
 
-## Conventions
+This repository is the computational companion to the SoftwareX Original Software Publication for **ctc-discrete-monodromy** (v0.1.0). It provides typed circulant-kernel assembly, spectral-radius / Lipschitz regression oracles, homogeneous and inhomogeneous Picard solvers, RK4 geodesic checks, and SymPy export of equatorial curvature assets.
 
-| Item | Choice |
+**Scope:** discrete operator diagnostics on explicit metric profiles—not continuum field theorems. Certified numerical claims refer to the row-normalized kernel \(K\) on \(\mathbb{R}^N\) and residuals of the map \(\Phi = K\Phi + S\).
+
+| Item | Value |
 |------|--------|
-| Metric signature | \((-+++\) |
-| Units | \(c = G = 1\) (geometric) |
-| Summation | Einstein convention |
-| Journal target | Classical and Quantum Gravity (IOP; `iopjournal.cls`) |
+| Package | `ctc-research-framework` 0.1.0 |
+| Binary | `ctc-engine` |
+| License | MIT |
+| Languages | Rust 2021 + Python 3 (SymPy / NumPy / SciPy / Matplotlib) |
+| OS | Windows 10+, Linux, macOS |
+| Repository | https://github.com/mauramyrez/ctc-discrete-monodromy |
 
-## Computational Status & Architecture
+## Capabilities
 
-| Criterion | Status | What the repository provides |
-|-----------|--------|------------------------------|
-| **(C1)** | Implemented | Explicit profiles \(\{b(r),\Phi(r),\omega(r)\}\), flare-out, CTC locus bisection |
-| **(C2)** | Symbolic export | Equatorial \(G_{\mu\nu}\) / NEC–WEC via SymPy as **static** background assets (not dynamically assembled in Rust) |
-| **(C3)** | **Core verified result** | Discrete Yukawa-proxy monodromy \(\mathcal{M}_N\): row-sum renormalized kernel \(K\), discrete \(H^1\)-proxy contraction, Banach–Picard fixed point in Rust |
-| **(C4)** | Analytic outlook only | Curvature-cutoff Hadamard bound — **not** numerically computed by this engine |
+| Capability | What the crate provides |
+|------------|-------------------------|
+| Metric profiles | Explicit \(\{b(r),\Phi(r),\omega(r)\}\), flare-out, equatorial ergoregion / ergosurface locus |
+| Symbolic export | Equatorial \(G_{\mu\nu}\) / NEC–WEC via SymPy as **static** background assets |
+| Discrete monodromy \(\mathcal{M}_N\) | Row-sum renormalized kernel \(K\), spectral-radius / grid-oscillation diagnostics |
+| Inhomogeneous workload | Forcing vector \(S\) with Picard map \(\Phi\mapsto K\Phi+S\) (nontrivial response) |
+| Modular kernels | `KernelKind::{YukawaProxy, ExponentialDecay}` comparative spectral baselines |
+| Geodesics | RK4 co-rotating equatorial integrator regression |
 
-### Discrete operator definition (C3)
+### Discrete operator definition
 
 The continuous Yukawa form with mode-augmented mass \(m_*\) **motivates** the kernel; all certified claims refer to the discrete operator on \(\mathbb{R}^N\):
 
@@ -31,24 +37,56 @@ K_{ij}
 \frac{\mathrm{e}^{-m_*\Delta\tau}}{\sum_k \widetilde{K}_{ik}}
 \]
 
-**Row-sum renormalization by \(\mathrm{e}^{-m_*\Delta\tau}\) is an explicit step of the discrete definition of \(\mathcal{M}_N\)**, not an emergent continuum property. Tests enforce `field.len() == n_nodes` (no silent truncation).
+Row-sum renormalization by \(\mathrm{e}^{-m_*\Delta\tau}\) is an explicit benchmarking step. It forces \(\rho(K)<1\) by construction. The homogeneous map (\(S=0\)) converges to \(\Phi^*=0\); a nonzero forcing \(S\) yields a nontrivial discrete response \(\Phi^*=(I-K)^{-1}S\). Tests enforce `field.len() == n_nodes` (no silent truncation).
 
-Energy-condition code paths are an **API scaffold** for quadratic-form sanity checks only; manuscript NEC/WEC contractions come from SymPy.
+## Cargo workspace layout
 
-## Layout
+This crate is a single-package Cargo project (not a multi-crate workspace). Layout:
 
 ```
-CTC-Research-Framework/
-├── docs/           # paper.tex, references.bib, figures/, appendices
-├── scripts/        # SymPy derivations & Matplotlib diagrams
-├── src/            # Rust: algebra / dynamics (M_N) / energy (scaffold)
-├── Cargo.toml
-└── requirements.txt
+CTC-Research-Framework/          # crate root (ctc-research-framework)
+├── Cargo.toml                   # package + [[bin]] ctc-engine
+├── LICENSE                      # MIT
+├── README.md
+├── requirements.txt             # Python pins for SymPy export / figures
+├── docs/                        # SoftwareX manuscript (paper.tex) + figures
+├── scripts/                     # SymPy derivations & Matplotlib diagrams
+└── src/
+    ├── lib.rs                   # algebra / dynamics / energy
+    ├── main.rs                  # ctc-engine CLI
+    ├── algebra/                 # metric profiles, invariants, Christoffel FD
+    ├── dynamics/
+    │   ├── monodromy.rs         # DiscreteMonodromyOperator, Picard, kernels
+    │   ├── geodesic.rs          # RK4 integrator
+    │   └── bvp.rs               # smoke-test re-exports
+    ├── energy/                  # quadratic-form API scaffold
+    └── tests/monodromy_test.rs  # regression suite entry
 ```
 
-## Quick start
+## Build instructions
 
-### Python (symbolic + figures)
+Requires a Rust toolchain via [`rustup`](https://rustup.rs/) (stable) and, for the Python layer, Python ≥ 3.10.
+
+### Rust (discrete operator engine)
+
+On Windows with long OneDrive paths, prefer a short Cargo target directory:
+
+```bash
+# optional on Windows if linker path length fails:
+# set CARGO_TARGET_DIR=C:\ctc-target
+
+cd CTC-Research-Framework
+cargo build --release
+cargo run --release --bin ctc-engine
+```
+
+Optional MPFR high-precision feature (needs system GMP/MPFR):
+
+```bash
+cargo build --release --features high-prec
+```
+
+### Python (symbolic metric export + figures)
 
 ```bash
 python -m venv .venv
@@ -68,33 +106,55 @@ Reference profile (matches `ExplicitProfileParams::prd_reference()`):
 (r_0,\gamma,\alpha,\omega_0,\beta)=(1.0,\ 0.5,\ 0.1,\ 1.2,\ 2.0)
 \]
 
-### Rust (discrete monodromy)
+## Running the 17/17 regression suite
 
-Requires a Rust toolchain (`rustup`). On Windows with long OneDrive paths, prefer a short target directory:
+From the crate root:
 
 ```bash
-# optional on Windows if linker path length fails:
-# set CARGO_TARGET_DIR=C:\ctc-target
-
-cargo build --release
-cargo run --release --bin ctc-engine
 cargo test
 ```
 
-Expected: **17/17** unit tests passed (geometry, energy scaffold, \(\mathcal{M}_N\) contraction, Picard for \(N\in\{32,64,128\}\), RK4 geodesics).
+Expected: **17/17** unit tests passed, covering
 
-Optional MPFR via `rug` (needs system GMP/MPFR):
+1. Metric / flare-out / ergosurface diagnostics
+2. Energy-scaffold API checks
+3. Monodromy bounds \(\rho(K)<1\) and oscillation Lipschitz \(L<1\)
+4. Homogeneous Picard residuals \(<10^{-8}\) for \(N\in\{32,64,128\}\)
+5. Inhomogeneous forcing \(\Phi=K\Phi+S\) with nontrivial \(\|\Phi^*\|_2\)
+6. Modular kernel spectral comparison (`YukawaProxy` vs `ExponentialDecay`)
+7. RK4 co-rotating geodesic integration
+
+Verbose monodromy output:
 
 ```bash
-cargo build --release --features high-prec
+cargo test -- --nocapture monodromy
 ```
 
-## Workflow
+## Minimal API example
 
-1. **(C2)** — Export tensors with `scripts/derive_tensors.py` / `verify_energy_conditions.py`.
-2. **(C1)/(C3)** — Profiles and \(\mathcal{M}_N\) live under `src/algebra` and `src/dynamics/novikov.rs`; run `cargo test`.
-3. **Manuscript** — Compile `docs/paper.tex` with latexmk / pdflatex + bibtex (figures from `docs/figures/`).
+```rust
+use ctc_research_framework::dynamics::monodromy::{
+    default_forcing_vector, default_monodromy_operator,
+    find_fixed_point, find_fixed_point_inhomogeneous, PeriodicField,
+};
+
+let m = default_monodromy_operator(); // N=128, m^2=1, nu=1
+assert!(m.is_contraction());
+
+// Homogeneous baseline → Φ* ≈ 0
+let init = PeriodicField::new((0..m.n_nodes).map(|i| 1.0 + 0.1 * (i as f64)).collect());
+let fp0 = find_fixed_point(&init, &m)?;
+assert!(fp0.field.l2_norm() < 1e-6);
+
+// Inhomogeneous workload → nontrivial response
+let source = default_forcing_vector(m.n_nodes);
+let zero = PeriodicField::new(vec![0.0; m.n_nodes]);
+let fp = find_fixed_point_inhomogeneous(&zero, &m, &source)?;
+assert!(fp.field.l2_norm() > 1e-3);
+assert!(fp.residual < 1e-8);
+```
 
 ## License
 
-MIT (research code). Manuscript copyright remains with the sole author, Mauricio Miguel Paniagua Ramirez.
+MIT. Manuscript copyright remains with the sole author, Mauricio Miguel Paniagua Ramirez.
+Support: 1912574a@umich.mx

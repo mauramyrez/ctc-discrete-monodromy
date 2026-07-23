@@ -1,384 +1,405 @@
-% !TEX program = pdflatex
-% Target journal: Classical and Quantum Gravity (IOP Publishing; iopjournal.cls)
-% Signature convention: (-,+,+,+); geometric units c = G = 1
-\documentclass{iopjournal}
+%% SoftwareX Original Software Publication (OSP)
+%% Based on the official Elsevier template:
+%%   https://www.elsevier.com/__data/promis_misc/softwarex-osp-template.tex
+%% Local copy: docs/softwarex-osp-template.tex
+%% Content describes ctc-discrete-monodromy v0.1.0 (Rust/Python source logic unchanged)
 
-\usepackage{amsmath,amssymb,amsfonts,amsthm}
-\usepackage{microtype}
-\usepackage{url}
+\documentclass[preprint,12pt,a4paper]{elsarticle}
 
-% Manuscript date (first submission draft)
-\newcommand{\manuscriptdate}{22 July 2026}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{float}
+\restylefloat{table}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{listings}
+\setlength{\parindent}{0pt}
 
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  breaklines=true,
+  frame=single,
+  columns=fullflexible,
+  keepspaces=true,
+  showstringspaces=false
+}
+
+\newcommand{\manuscriptdate}{23 July 2026}
 \newcommand{\Phir}{\Phi(r)}
 \newcommand{\br}{b(r)}
 \newcommand{\omegar}{\omega(r)}
-\newcommand{\Gmn}{G_{\mu\nu}}
-\newcommand{\Tmn}{T_{\mu\nu}}
-\newcommand{\Rmn}{R_{\mu\nu}}
-\newcommand{\ctc}{CTC}
-\newcommand{\Mcal}{\mathcal{M}}
 \newcommand{\MN}{\mathcal{M}_{N}}
-\newcommand{\phif}{\varphi_{\mathrm{st}}}
 
-\newtheorem{theorem}{Theorem}[section]
-\newtheorem{proposition}[theorem]{Proposition}
-\newtheorem{lemma}[theorem]{Lemma}
-\newtheorem{definition}[theorem]{Definition}
+\journal{SoftwareX}
 
 \begin{document}
+\renewcommand{\labelenumii}{\arabic{enumi}.\arabic{enumii}}
 
-\articletype{Paper}
+\begin{frontmatter}
 
-\title{Discrete Sobolev Monodromy Contraction and Novikov Consistency Verification on Axisymmetric Frame-Dragging Wormhole Backgrounds}
+\title{ctc-discrete-monodromy: a reproducible Rust/SymPy framework for discrete operator diagnostics on axisymmetric ergoregion backgrounds}
 
-\author{Mauricio Miguel Paniagua Ramirez$^{1,*}$}
-
-\affil{$^1$Facultad de Ingenier\'ia El\'ectrica, Universidad Michoacana de San Nicol\'as de Hidalgo (UMSNH), Morelia, Michoac\'an, M\'exico}
-
-\affil{$^*$Author to whom any correspondence should be addressed.}
-
-\email{1912574a@umich.mx}
-
-\keywords{closed timelike curves, Novikov consistency, Morris--Thorne wormholes, discrete monodromy, Banach fixed-point theorem, computational general relativity}
+\author[umsn]{Mauricio Miguel Paniagua Ramirez\corref{cor1}}
+\ead{1912574a@umich.mx}
+\cortext[cor1]{Corresponding author}
+\address[umsn]{Facultad de Ingenier\'ia El\'ectrica,
+Universidad Michoacana de San Nicol\'as de Hidalgo (UMSNH),
+Morelia, Michoac\'an, M\'exico}
 
 \begin{abstract}
-We develop a reproducible computational and functional-analytic framework for verifying Novikov field self-consistency on stationary, axisymmetric Morris--Thorne geometries with azimuthal frame dragging.
-Closed-form metric profiles $\{\Phir,\br,\omegar\}$ define a Lorentzian background with flare-out at the throat and a chronology-violating equatorial locus wherever $e^{2\Phir}<r^{2}\omegar^{2}$ [criterion~(C1)].
-A Yukawa-type retarded kernel with mode-augmented mass $m_{\ast}$ is sampled on an $N$-node azimuthal loop and row-sum renormalized by $\exp(-m_{\ast}\Delta\tau)$ to produce a discrete monodromy operator $\MN$ on $\mathbb{R}^{N}$.
-We prove that $\MN$ is a strict contraction in a discrete $H^{1}$-proxy norm whenever $m^{2}>0$, so the Banach fixed-point theorem yields a unique Novikov fixed point and geometric Picard convergence [criterion~(C3)].
-A typed Rust integration engine corroborates these claims: all $17/17$ unit tests pass, with spectral radius $\|K\|_{L^{2}}<1$ and Picard residual $<10^{-8}$ in fewer than $500$ iterations for $N\in\{32,64,128\}$.
-The equatorial Einstein tensor is exported symbolically (SymPy) as a background asset [criterion~(C2)]; a curvature-cutoff Hadamard bound is stated only as an effective-field-theory (EFT) outlook [criterion~(C4)], not as a numerical result.
+\texttt{ctc-discrete-monodromy} is an open-source numerical framework for constructing explicit stationary, axisymmetric Morris--Thorne metric profiles with strong azimuthal frame dragging, exporting equatorial curvature assets via SymPy, and benchmarking row-normalized discrete monodromy operators in typed Rust.
+It targets computational physicists, numerical analysts, and research software engineers who need reproducible circulant-kernel spectral diagnostics, Picard fixed-point regression (homogeneous and inhomogeneous), modular kernel comparison, and RK4 geodesic checks.
+Design choices such as mass-gap row renormalization and grid-oscillation Lipschitz proxies are implemented as numerical test oracles that certify pipeline stability ($\rho(K)<1$, residuals $<10^{-8}$), not as continuum field theorems.
+All $17/17$ Rust unit tests pass; the stack is MIT-licensed and runs on Windows, Linux, and macOS.
 \end{abstract}
 
-%==============================================================================
-\section{Introduction}
-\label{sec:intro}
+\begin{keyword}
+scientific software \sep Rust \sep SymPy \sep discrete monodromy \sep numerical benchmarking \sep reproducible research
+\end{keyword}
 
-Closed timelike curves (\ctc{}s) raise precise questions of PDE well-posedness and field self-consistency on chronologically nontrivial backgrounds~\cite{Hawking1992,Novikov1989,Friedman1990,KimThorne1991}.
-The Novikov principle requires that any field configuration on a closed causal curve equal its image under transport around the loop~\cite{Novikov1989,Friedman1990}.
-This paper treats that principle as a \emph{computational fixed-point problem} on an explicit frame-dragging wormhole geometry~\cite{Morris1988,Visser1995}, distinguishing carefully between continuous analytic models and the discrete numerical proxies that are actually implemented and tested.
+\end{frontmatter}
 
-We organize the contribution around four criteria of decreasing computational status:
-\begin{enumerate}
-  \item[(C1)] \textbf{Geometric regularity (implemented):}
-    smooth profiles with flare-out and an equatorial chronology-violating locus $e^{2\Phir}<r^{2}\omegar^{2}$;
-  \item[(C2)] \textbf{Symbolic background stress-energy (exported):}
-    equatorial $\Gmn$ and NEC/WEC contractions obtained by SymPy as static constraints, not as dynamically evolved Rust tensors;
-  \item[(C3)] \textbf{Discrete Sobolev contraction (core result):}
-    unique Novikov fixed point for a mass-gap--renormalized monodromy matrix $\MN$, verified by Banach--Picard iteration in Rust;
-  \item[(C4)] \textbf{Hadamard EFT outlook (analytic proposal):}
-    a curvature cutoff $\ell_{\star}$ regulating the Kim--Thorne coincidence pole within a non-minimal scalar-tensor sector---not computed by the numerical engine.
-\end{enumerate}
+%%==============================================================================
+\section*{Required Metadata}
+\label{sec:required-metadata}
 
-Throughout, ``continuous'' statements motivate the kernel form; all certified numerical claims refer to the discrete operator $\MN$ constructed in Sec.~\ref{sec:novikov}.
-Criterion~(C3) is the primary result.
-The reproducible pipeline is SymPy tensor export $\to$ typed Rust integration $\to$ IOP journal \LaTeX\ rendering (Sec.~\ref{sec:conclusion}), with all companion artifacts released in the open-source repository~\cite{PaniaguaRamirez2026CTC}.
+\section*{Current code version}
+\label{sec:code-version}
 
-%==============================================================================
-\section{Geometry and profile class}
-\label{sec:geometry}
+Ancillary data table required for subversion of the codebase.
 
-We adopt the stationary, axisymmetric line element
-\begin{equation}
-\label{eq:metric}
-\begin{split}
-\mathrm{d}s^{2}
-&= -e^{2\Phir}\,\mathrm{d}t^{2}
- + \frac{\mathrm{d}r^{2}}{1-\br/r}
- + r^{2}\,\mathrm{d}\theta^{2} \\
-&\quad + r^{2}\sin^{2}\theta\,\bigl(\mathrm{d}\varphi - \omegar\,\mathrm{d}t\bigr)^{2},
-\end{split}
-\end{equation}
-with coordinates $x^{\mu}=(t,r,\theta,\varphi)$ and
-$\det(g_{\mu\nu})=-r^{5}e^{2\Phir}\sin^{2}\theta/(r-\br)$.
+\begin{table}[H]
+\small
+\begin{tabular}{|l|p{5.2cm}|p{6.8cm}|}
+\hline
+\textbf{Nr.} & \textbf{Code metadata description} & \textbf{Please fill in this column} \\
+\hline
+C1 & Current code version & 0.1.0 \\
+\hline
+C2 & Permanent GitHub link to code/repository used for this code version & \url{https://github.com/mauramyrez/ctc-discrete-monodromy} \\
+\hline
+C3 & Legal Code License & MIT License \\
+\hline
+C4 & Code versioning system used & git \\
+\hline
+C5 & Software code languages, tools, and services used & Rust 2021 edition (\texttt{nalgebra}, \texttt{serde}, \texttt{anyhow}, \texttt{thiserror}); Python~3 (SymPy, NumPy, SciPy, Matplotlib); Cargo; pip \\
+\hline
+C6 & Compilation requirements, operating environments \& dependencies & \texttt{rustup} (stable) + Cargo; optional \texttt{high-prec} feature (GMP/MPFR via \texttt{rug}). OS: Windows~10+, Linux, macOS. Python~$\ge$3.10 with \texttt{requirements.txt} pins. \\
+\hline
+C7 & If available Link to developer documentation/manual & \url{https://github.com/mauramyrez/ctc-discrete-monodromy\#readme} \\
+\hline
+C8 & Support email for questions & 1912574a@umich.mx \\
+\hline
+\end{tabular}
+\caption{Code metadata (mandatory for SoftwareX OSP submissions)}
+\label{tab:code-meta}
+\end{table}
 
-\subsection{Explicit metric profiles}
+%%==============================================================================
+\section{Motivation and significance}
+\label{sec:motivation}
 
-We specify the closed-form parameterization used throughout the Rust crate and the symbolic pipeline,
-\begin{align}
-\label{eq:profiles}
-\br &= r_{0}\Bigl(\frac{r_{0}}{r}\Bigr)^{\gamma},
-& \Phir &= -\frac{\alpha r_{0}}{r},
-& \omegar &= \omega_{0}\exp\!\Bigl[-\beta\frac{r-r_{0}}{r_{0}}\Bigr],
-\end{align}
-with $\gamma>0$, $\alpha\ge 0$, $\omega_{0}>0$, and $\beta>0$.
-At the throat $r=r_{0}$: $b(r_{0})=r_{0}$ and $b'(r_{0})=-\gamma$, so the flare-out condition $b'<1$ holds whenever $\gamma>0$~\cite{Morris1988}.
+Numerical work on stationary axisymmetric geometries routinely needs three ingredients that are rarely packaged together in a single, regression-tested stack:
+(i)~closed-form metric profiles with controllable frame dragging and an equatorial ergoregion locus;
+(ii)~symbolic export of background curvature tensors for documentation and static constraint checks; and
+(iii)~typed, high-performance discrete operator diagnostics with automated spectral and fixed-point oracles.
 
-\paragraph{Reference parameters.}
-Unless otherwise stated, numerical diagnostics use the crate reference profile
-\begin{equation}
-\label{eq:prd-params}
-r_{0}=1,\quad
-\gamma=0.5,\quad
-\alpha=0.1,\quad
-\omega_{0}=1.2,\quad
-\beta=2.0,
-\end{equation}
-with the monodromy and geodesic loops evaluated at $r_{\mathrm{loop}}=1.5\,r_{0}$.
+Existing general-relativity toolkits emphasize continuum tensor calculus or spacetime visualization~\cite{Morris1988,Visser1995}, but leave discrete circulant-operator hygiene---row-sum normalization semantics, spectral-radius regression, Picard residual tracking, and dimension-safe matrix--vector application---to ad~hoc scripts.
+That gap produces fragile floating-point pipelines that are difficult to reproduce across operating systems and hard to cite as software artifacts.
 
-\paragraph{Admissibility bounds (C1).}
-\begin{align}
-\label{eq:bounds}
-\gamma &> 0
-&& \text{(flare-out)}, \nonumber\\
-e^{-2\alpha} &< r_{0}^{2}\omega_{0}^{2}
-&& \text{(CTC opens at throat)}, \nonumber\\
-r_{\mathrm{CTC}} &> r_{0}
-&& \text{(chronology-violating locus exterior to throat)}.
-\end{align}
-The onset radius $r_{\mathrm{CTC}}$ is the smallest $r>r_{0}$ solving $e^{2\Phir(r)}=r^{2}\omegar(r)^{2}$, computed in the crate by bisection.
+\texttt{ctc-discrete-monodromy} closes this gap for an explicit Morris--Thorne profile class with azimuthal frame dragging.
+Intended users are computational physicists, numerical analysts, and engineers who need a maintainable benchmark for discrete linear maps sampled on azimuthal loops, not a continuum well-posedness theorem for fields on causality-sensitive backgrounds.
 
-\subsection{Frame dragging, chronology horizon, and CTC locus}
+An open-source Rust implementation is necessary because:
+\begin{itemize}
+  \item typed ownership and explicit dimension asserts eliminate silent truncation bugs common in notebook-centric operator code;
+  \item release-mode performance with link-time optimization supports dense $N\times N$ kernel builds and Picard loops without sacrificing reproducibility;
+  \item a Cargo test harness provides deterministic regression gates ($17/17$ unit tests) suitable for continuous integration.
+\end{itemize}
 
-The Killing combination $\xi=\partial_{t}+\Omega\partial_{\varphi}$ is timelike when
-\begin{equation}
-\label{eq:ctc-criterion}
--e^{2\Phir}+2\Omega\,\omegar\, r^{2}\sin^{2}\theta
-+\Omega^{2}r^{2}\sin^{2}\theta<0.
-\end{equation}
-On the equatorial plane ($\theta=\pi/2$) with $\Omega=\omegar$, this reduces to
-\begin{equation}
-\label{eq:ctc-simple}
-e^{2\Phir} < r^{2}\omegar^{2}.
-\end{equation}
-We write $\Sigma_{\mathrm{ERGO}}$ for the surface $e^{2\Phir}=r^{2}\omegar^{2}$: it is the equatorial frame-dragging boundary at which $-\partial_{t}$ becomes null, and the chronology-violating locus for co-rotating observers opens wherever~\eqref{eq:ctc-simple} holds (the chronology horizon in the sense of the present stationary geometry).
-Null slopes in the $(t,\varphi)$ subspace are
-\begin{equation}
-\label{eq:null-slopes}
-\Bigl(\frac{\mathrm{d}\varphi}{\mathrm{d}t}\Bigr)_{\!\pm}=\omegar\pm e^{\Phir}/r,
-\end{equation}
-so the future light cone encompasses $-\partial_{t}$ when~\eqref{eq:ctc-simple} holds (Fig.~\ref{fig:lightcones}).
+\paragraph{Experimental setting (how the user uses the software).}
+A typical session is:
+(1)~install the pinned Python stack and run SymPy export/figure scripts;
+(2)~build the Rust crate and run \texttt{ctc-engine} for interactive spectral/Picard reports;
+(3)~execute \texttt{cargo test} as the acceptance gate before modifying kernels or profiles.
+All certified numerical claims refer to the discrete operator $\MN$ constructed in the crate; continuous equations only motivate kernel shapes.
 
-Christoffel symbols used for geodesic diagnostics are obtained from~\eqref{eq:metric} by central finite differences with step $\varepsilon=10^{-5}$.
-Closed timelike initial data at $r_{\mathrm{loop}}$ are normalized so that $g(u,u)=-1$ with $u\propto(1,0,0,\omega)$, and integrated by classical RK4 with step $\Delta\tau=0.01$ (Fig.~\ref{fig:geodesic}).
+\paragraph{Related work.}
+Classical wormhole teaching models~\cite{Morris1988,Visser1995} and stationary ergoregion geometry~\cite{HawkingEllis1973} provide the profile class used as an explicit metric background for discrete sampling.
+This software implements only discrete operator diagnostics---circulant-kernel assembly, spectral-radius regression, and Picard residual tracking---on azimuthal samples of those profiles, without continuum field or causality claims.
+The companion open-source repository archives the implementation and regression suite~\cite{PaniaguaRamirez2026CTC}.
+
+%%==============================================================================
+\section{Software description}
+\label{sec:software}
+
+\subsection{Software architecture}
+\label{sec:architecture}
+
+The repository is organized as a dual-language research software stack (Fig.~\ref{fig:pipeline}):
+
+\begin{lstlisting}[language={}]
+CTC-Research-Framework/
+  Cargo.toml, requirements.txt, LICENSE (MIT)
+  src/                 # Rust crate: ctc_research_framework
+    lib.rs             # public modules: algebra, dynamics, energy
+    algebra/           # metric profiles, invariants, Christoffel FD
+    dynamics/
+      monodromy.rs     # DiscreteMonodromyOperator, Picard, kernels
+      geodesic.rs      # RK4 equatorial geodesic integrator
+      bvp.rs           # smoke tests (homogeneous + inhomogeneous)
+    energy/            # API scaffold for quadratic-form checks
+    main.rs            # ctc-engine CLI driver
+    tests/             # regression suite (monodromy_test.rs)
+  scripts/             # SymPy export + Matplotlib diagrams
+  docs/                # SoftwareX manuscript + figures
+\end{lstlisting}
+
+\begin{itemize}
+  \item \textbf{\texttt{lib.rs}} exposes \texttt{algebra}, \texttt{dynamics}, and \texttt{energy}, with a \texttt{[cfg(test)]} suite entry point.
+  \item \textbf{\texttt{monodromy.rs}} is the core deliverable: \texttt{PeriodicField}, \texttt{DiscreteMonodromyOperator}, modular \texttt{KernelKind} assembly, row-sum renormalization, power-iteration spectral diagnostics, grid-oscillation Lipschitz bounds, and Picard iteration for both homogeneous ($S=0$) and inhomogeneous ($\Phi=K\Phi+S$) maps.
+  \item \textbf{SymPy scripts} (\texttt{derive\_tensors.py}, \texttt{verify\_energy\_conditions.py}) generate static equatorial tensor assets; they are not invoked from the Rust hot path.
+  \item \textbf{\texttt{ctc-engine}} (\texttt{main.rs}) prints geometry, $\rho(K)$, oscillation Lipschitz, homogeneous/inhomogeneous Picard residuals, modular-kernel comparison, and energy-scaffold smoke results.
+\end{itemize}
 
 \begin{figure}[t]
 \centering
-\begin{minipage}{0.48\textwidth}
-\centering
-\includegraphics[width=\linewidth]{figures/lightcones.pdf}
-\caption{Light-cone tipping in the equatorial $(t,\varphi)$ plane for the reference profiles~\eqref{eq:prd-params}. Blue: chronology-respecting ($e^{2\Phir}>r^{2}\omegar^{2}$); red: chronology-violating locus ($e^{2\Phir}<r^{2}\omegar^{2}$).}
-\label{fig:lightcones}
-\end{minipage}\hfill
-\begin{minipage}{0.48\textwidth}
-\centering
-\includegraphics[width=\linewidth]{figures/geodesic_loop.pdf}
-\caption{Equatorial projection of an RK4 geodesic orbit $\gamma(\tau)$ initialized on the CTC-normalized tangent at $r_{\mathrm{loop}}=1.5\,r_{0}$ (reference profile), with throat and frame-dragging boundary $\Sigma_{\mathrm{ERGO}}$ indicated.}
-\label{fig:geodesic}
-\end{minipage}
+\fbox{\parbox{0.92\linewidth}{\centering\footnotesize\sffamily
+\textbf{SymPy} (\texttt{scripts/})\;$\longrightarrow$\;
+\textbf{Rust crate} (\texttt{lib.rs} / \texttt{monodromy.rs})\;$\longrightarrow$\;
+\textbf{cargo test} (17/17)\;$\longrightarrow$\;
+\textbf{docs/} (SoftwareX \LaTeX)
+}}
+\caption{End-to-end software pipeline: symbolic export, typed discrete-operator engine, automated regression, and manuscript assets.}
+\label{fig:pipeline}
 \end{figure}
 
-%==============================================================================
-\section{Symbolic Einstein tensor and energy conditions}
-\label{sec:energy}
-
-Einstein's equations read $\Gmn=\Rmn-\tfrac12 R\,g_{\mu\nu}=8\pi\Tmn$.
-The equatorial components of $\Gmn$ and the associated NEC/WEC contractions are obtained by symbolic differentiation in SymPy (Appendices~\ref{app:tensors}--\ref{app:energy}) and treated as \emph{background constraints} on the profile class~\eqref{eq:profiles}.
-They are not assembled dynamically from curvature inside the Rust integration engine; the crate's energy-condition unit tests exercise only scaffold quadratic forms for API sanity checks.
-
-\IfFileExists{derived_equations_summary.tex}{\input{derived_equations_summary.tex}}{}
-\IfFileExists{energy_conditions_summary.tex}{\input{energy_conditions_summary.tex}}{}
-
-Within an EFT mean-field envelope, the non-minimal coupling $\zeta\,\phif R$ is regarded as a background parameter that can energetically bound local NEC/WEC violations whenever $|\zeta\,\phif R|$ exceeds the magnitude of the negative-energy density implied by $\Tmn=\Gmn/(8\pi)$.
-This defines a self-consistent parameter domain for the profile class; it does not constitute a dynamical generation mechanism for exotic matter, nor a Rust-verified localization theorem.
-
-%==============================================================================
-\section{Dynamic stability: discrete Sobolev contraction}
-\label{sec:novikov}
-
-Novikov's principle requires that fields on a closed causal curve equal their image under transport around the loop.
-We motivate the transport map from the massive Klein--Gordon equation on~\eqref{eq:metric},
+\paragraph{Reference geometry configuration.}
+Profiles used throughout the crate are closed-form,
 \begin{equation}
-\label{eq:kg}
-\frac{1}{\sqrt{-g}}\,\partial_{\mu}\!\Bigl(\sqrt{-g}\,g^{\mu\nu}\partial_{\nu}\phi\Bigr)-m^{2}\phi=0,
+\label{eq:profiles}
+\br = r_{0}\Bigl(\frac{r_{0}}{r}\Bigr)^{\gamma},\quad
+\Phir = -\frac{\alpha r_{0}}{r},\quad
+\omegar = \omega_{0}\exp\!\Bigl[-\beta\frac{r-r_{0}}{r_{0}}\Bigr],
 \end{equation}
-but we do \emph{not} discretize the full curved-space PDE.
-Instead we construct an explicit discrete monodromy operator on the azimuthal loop that inherits a Yukawa mass gap from~\eqref{eq:kg} and is contractive by design.
+with defaults $(r_{0},\gamma,\alpha,\omega_{0},\beta)=(1.0,\,0.5,\,0.1,\,1.2,\,2.0)$
+via \texttt{ExplicitProfileParams::prd\_reference()}.
+The monodromy loop defaults to $r_{\mathrm{loop}}=1.5\,r_{0}$ (just outside the reported outer ergosurface $r_{\mathrm{ERGO}}\approx 1.238\,r_{0}$), providing a strongly dragged near-ergoregion exterior without throat-adjacent coordinate singularities.
 
-\subsection{Continuous Yukawa proxy}
+\subsection{Software functionalities}
+\label{sec:functionalities}
 
-Decomposing into azimuthal modes $\phi\sim\psi_{\nu}(r)\,e^{i(\nu\varphi-\Omega t)}$ suggests a mode-augmented mass
-\begin{equation}
-\label{eq:m-star}
-m_{\ast}^{2}=m^{2}+\nu^{2}/g_{\varphi\varphi},
-\qquad
-G(\Delta s)\sim\frac{m_{\ast}}{4\pi\Delta s}\,e^{-m_{\ast}\Delta s},
-\end{equation}
-for a retarded Yukawa-type kernel along a closed timelike trajectory $\gamma(\tau)$.
-Equation~\eqref{eq:m-star} is the continuous \emph{proxy} that motivates the discrete construction below; it is not claimed to be the exact retarded Green function of~\eqref{eq:kg} on~\eqref{eq:metric}.
-
-\subsection{Discrete monodromy operator}
-
-\begin{definition}[Discrete monodromy $\MN$]
-\label{def:MN}
-Fix $r=r_{\mathrm{loop}}$, $\theta=\pi/2$, and $N$ uniform nodes $\chi_{i}=2\pi i/N$ along the azimuthal circle.
-Let $\Delta\varphi=2\pi/N$ and $\Delta\tau=\sqrt{g_{\varphi\varphi}}\,\Delta\varphi$.
-For forward proper separations $\Delta s_{j\to i}$ along the loop, define the sampled kernel matrix
-\begin{equation}
-\label{eq:K-raw}
-\widetilde{K}_{ij}
-=
-\begin{cases}
-G(\Delta s_{j\to i})\,\Delta\tau, & i\neq j,\\
-0, & i=j,
-\end{cases}
-\end{equation}
-with $G$ from~\eqref{eq:m-star}.
-The discrete monodromy operator is the \emph{row-sum renormalized} matrix
+\paragraph{Discrete monodromy operator (core API).}
+On $N$ uniform azimuthal nodes the crate builds a sampled proxy matrix $\widetilde{K}$ (modular \texttt{KernelKind}) and applies an \emph{explicit} row-sum renormalization
 \begin{equation}
 \label{eq:K-renorm}
 K_{ij}
 =
 \widetilde{K}_{ij}\,
-\frac{\exp(-m_{\ast}\Delta\tau)}{\sum_{k}\widetilde{K}_{ik}}
-\qquad\bigl(\text{when the row sum is nonzero}\bigr),
+\frac{\exp(-m_{\ast}\Delta\tau)}{\sum_{k}\widetilde{K}_{ik}},
 \end{equation}
-and $\MN:\mathbb{R}^{N}\to\mathbb{R}^{N}$ acts by $\Phi\mapsto K\Phi$.
-\end{definition}
+producing the circulant (constant-row-sum) operator $\MN:\mathbb{R}^{N}\to\mathbb{R}^{N}$.
+Row renormalization is a software design pattern and numerical test oracle: it forces every row sum to $\alpha=\exp(-m_{\ast}\Delta\tau)<1$ whenever $m_{\ast}>0$, hence $\rho(K)=\alpha<1$ by construction for nonnegative constant-row-sum matrices.
+The homogeneous map $\Phi\mapsto K\Phi$ therefore converges to the trivial fixed point $\Phi^{*}=0$, which the regression suite uses as a floating-point stress test---not as a continuum Green-function solution.
 
-Row renormalization forces every row of $K$ to sum to $\exp(-m_{\ast}\Delta\tau)<1$ whenever $m_{\ast}>0$.
-Consequently the spectral radius satisfies $\rho(K)\le\exp(-m_{\ast}\Delta\tau)<1$ for this constructed operator.
-The default crate parameters are $r_{\mathrm{loop}}=1.5\,r_{0}$, $m^{2}=1$, $\nu=1$, and $N=128$, with tolerances $\mathrm{tol}=10^{-12}$ (solver) and residual thresholds $10^{-8}$--$10^{-10}$ (tests).
-
-\subsection{Discrete $H^{1}$-proxy norm and contraction}
-
-On periodic samples $\Phi\in\mathbb{R}^{N}$ we use the discrete norms
-\begin{align}
-\label{eq:discrete-norms}
-\|\Phi\|_{L^{2}}^{2}
-&=
-\frac1N\sum_{i=0}^{N-1}\Phi_{i}^{2},
-\qquad
-\|\Phi\|_{H^{1}}^{2}
-=
-\|\Phi\|_{L^{2}}^{2}
-+
-\|\delta\Phi\|_{L^{2}}^{2},
-\end{align}
-where $(\delta\Phi)_{i}=(\Phi_{i+1}-\Phi_{i-1})/2$ is the central difference on the index circle (the crate's $H^{1}$-proxy; not a continuum Sobolev norm on $\gamma$).
-The $L^{2}$ operator norm of $K$ is estimated by power iteration; the discrete Sobolev lift used for the Lipschitz bound is
+\paragraph{Inhomogeneous response and modular kernel diagnostics.}
+\label{sec:inhomogeneous}
+Beyond the homogeneous oracle, the solver implements the discrete inhomogeneous fixed-point map
 \begin{equation}
-\label{eq:discrete-sobolev}
-L
-\le
-\|K\|_{L^{2}}\,
-\Bigl(1+\frac{\pi\sqrt{2}}{N}\Bigr).
+\label{eq:inhomo}
+\Phi = K\Phi + S,
 \end{equation}
+equivalently $\Phi=(I-K)^{-1}S$ when $\rho(K)<1$.
+Picard iteration advances $\Phi_{n+1}=K\Phi_n+S$ and reports the residual $\|\Phi-K\Phi-S\|_{2}$.
+A default sinusoidal forcing vector $S$ (unit-scaled mode on the azimuthal grid) produces a nontrivial response $\|\Phi^{*}\|_{2}>0$, elevating the computational workload above a pure null-solution regression.
+Separately, \texttt{KernelKind::\{YukawaProxy, ExponentialDecay\}} exposes comparative modular kernel assembly under identical row-renormalization semantics, so spectral-radius and Lipschitz oracles can be contrasted across kernel families without changing the metric profile or node count.
+Both paths are discrete operator diagnostics on explicit metric profiles; they do not claim continuum PDE well-posedness.
 
-\begin{lemma}[Discrete Sobolev contraction]
-\label{lem:sobolev}
-Assume $m^{2}>0$ and the background geometry is bounded on the loop at $r_{\mathrm{loop}}$.
-Let $K$ be the renormalized matrix~\eqref{eq:K-renorm}.
-If $\|K\|_{L^{2}}<1$ and the proxy bound~\eqref{eq:discrete-sobolev} satisfies $L<1$, then $\MN$ is a strict contraction on $(\mathbb{R}^{N},\|\cdot\|_{H^{1}})$.
-\end{lemma}
-
-\begin{proof}
-By construction each row of $K$ sums to $\exp(-m_{\ast}\Delta\tau)<1$, so $\rho(K)<1$ and the power-iteration estimate of $\|K\|_{L^{2}}$ is strictly less than unity for the reference parameters.
-The discrete lift~\eqref{eq:discrete-sobolev} then yields $L<1$, hence
+\paragraph{Spectral and Lipschitz diagnostics.}
+\texttt{DiscreteMonodromyOperator::spectral\_radius} (power iteration) and \texttt{lipschitz\_bound}
 \[
-\|\MN\Phi-\MN\Psi\|_{H^{1}}
-\le
-L\,\|\Phi-\Psi\|_{H^{1}}
+L\le\rho(K)\,(1+\pi\sqrt{2}/N)
 \]
-for all $\Phi,\Psi\in\mathbb{R}^{N}$.
-\end{proof}
+are exposed as software thresholds.
+\texttt{PeriodicField} provides $L^{2}$ and index-space oscillation norms; \texttt{apply\_kernel} asserts \texttt{field.len()==n\_nodes} to forbid silent truncation.
 
-\begin{theorem}[Novikov consistency for $\MN$]
-\label{thm:novikov-stability}
-Under Lemma~\ref{lem:sobolev}, there exists a unique fixed point $\Phi^{*}=K\Phi^{*}$ in $\mathbb{R}^{N}$, and the Picard iteration $\Phi_{k+1}=K\Phi_{k}$ converges geometrically from arbitrary initial data in $\mathbb{R}^{N}$.
-\end{theorem}
+\paragraph{Geodesic integrator.}
+\texttt{geodesic.rs} supplies classical RK4 integration ($\Delta\tau=0.01$, $200$ steps) of co-rotating, unit-normalized equatorial initial data with Christoffel symbols from central finite differences ($\varepsilon=10^{-5}$).
+These orbits are integrator regression checks on the near-ergoregion exterior.
 
-\begin{proof}
-Lemma~\ref{lem:sobolev} places $\MN$ as a strict contraction on the Banach space $(\mathbb{R}^{N},\|\cdot\|_{H^{1}})$.
-The Banach fixed-point theorem yields existence and uniqueness of $\Phi^{*}$, together with geometric convergence of Picard iterates.
-\end{proof}
+\paragraph{Symbolic export workflow.}
+Python scripts export equatorial Einstein-tensor components and NEC/WEC contractions for the profile class~\eqref{eq:profiles}.
+Rust \texttt{energy} modules exercise only scaffold quadratic forms for API sanity; manuscript-grade contractions remain SymPy assets.
 
-\paragraph{Numerical verification (C3).}
-\label{sec:numerical}
-The CTC Research Framework implements Definition~\ref{def:MN} and Theorem~\ref{thm:novikov-stability} in Rust.
-All $17/17$ unit tests pass, covering:
-\begin{enumerate}
-  \item[(i)] geometric/\ctc{} metric invariants and flare-out for~\eqref{eq:prd-params} (5);
-  \item[(ii)] scaffold energy-condition API diagnostics (2);
-  \item[(iii)] monodromy bounds $\|K\|_{L^{2}}<1$ and $L<1$ (3);
-  \item[(iv)] Banach--Picard convergence $\|\Phi^{*}-K\Phi^{*}\|_{2}<10^{-8}$ in fewer than $500$ iterations for $N\in\{32,64,128\}$ (5);
-  \item[(v)] RK4 integration of CTC-normalized geodesics with $\Delta\tau=0.01$ over $200$ steps (2).
-\end{enumerate}
-These tests corroborate the discrete contraction theory for $\MN$; they do not certify that the unnormalized continuum Green function of~\eqref{eq:kg} is itself an $H^{1}(\gamma)$ contraction.
+\subsection{Sample code snippets analysis}
+\label{sec:snippets}
 
-%==============================================================================
-\section{Semiclassical Hadamard bound: EFT outlook}
-\label{sec:backreaction}
+The default factory \texttt{default\_monodromy\_operator()} wires the reference profile at $r_{\mathrm{loop}}=1.5\,r_{0}$ with $m^{2}=1$, $\nu=1$, and $N=128$.
+\texttt{find\_fixed\_point} (homogeneous) and \texttt{find\_fixed\_point\_inhomogeneous} rebuild $K$ once, then Picard-iterate with residual tolerance $10^{-12}$ (solver) under the contraction gate \texttt{is\_contraction()}.
+Dimension mismatches panic early, which is intentional software hygiene for regression oracles.
 
-Semiclassical analyses predict a $(\Delta\ell)^{-4}$ divergence of $\langle\Tmn\rangle_{\mathrm{ren}}$ as null geodesics accumulate on the chronology horizon~\cite{KimThorne1991,Hawking1992}.
-We record here an \emph{analytic EFT proposal} for regulating that pole by a non-minimal curvature cutoff.
-No part of this section is implemented or verified by the Rust numerical suite.
+%%==============================================================================
+\section{Illustrative examples}
+\label{sec:examples}
 
-\input{backreaction_bounds.tex}
+\subsection{Build, run, and reproduce the test suite}
 
-Proposition~\ref{prop:bounded-Tren} is therefore a proposed bound within a cutoff-regulated scalar-tensor sector, not a numerical theorem of the present codebase.
+\begin{lstlisting}[language={}]
+# Python symbolic / figure layer
+python -m venv .venv
+# Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+python scripts/derive_tensors.py
+python scripts/plot_spacetime_diagrams.py
 
-\paragraph{Comparison with the Kay--Radzikowski--Wald no-go theorem.}
-\label{sec:kay-wald}
-Kay, Radzikowski, and Wald~\cite{KayRadzikowskiWald1997} proved that no Hadamard state exists throughout a neighborhood of a compactly generated Cauchy horizon under \emph{minimal} coupling.
-Proposition~\ref{prop:bounded-Tren} does not contradict that result: Kay--Wald assumes $\zeta=0$ and a globally Hadamard state, whereas $\zeta\,\phif R$ supplies the curvature cutoff $\ell_{\star}$, modifies the short-distance parametrix, and truncates null windings at $n_{\max}\sim 2\pi r_{\mathrm{CH}}/\ell_{\star}$.
-The bound is cutoff-regulated within an EFT sector; it is not a claim that a minimally coupled Hadamard state extends across $\Sigma_{\mathrm{ERGO}}$, nor that the numerical engine computes $\langle\Tmn\rangle_{\mathrm{ren}}$.
+# Rust discrete-operator engine
+# Optional on Windows long paths: set CARGO_TARGET_DIR=C:\ctc-target
+cargo build --release
+cargo run --release --bin ctc-engine
+cargo test
+\end{lstlisting}
 
-%==============================================================================
-\section{Conclusion and methodological contribution}
-\label{sec:conclusion}
+Expected outcome of \texttt{cargo test}: \textbf{17/17} unit tests passed, covering
+(i)~metric / flare-out / ergosurface diagnostics;
+(ii)~energy-scaffold API checks;
+(iii)~monodromy bounds $\rho(K)<1$ and $L<1$;
+(iv)~homogeneous Picard residuals $<10^{-8}$ in $<500$ iterations for $N\in\{32,64,128\}$;
+(v)~inhomogeneous response $\Phi=K\Phi+S$ with nontrivial $\|\Phi^{*}\|_{2}$ and modular-kernel spectral comparison;
+(vi)~RK4 co-rotating geodesic integration.
 
-We have constructed a reproducible computational pipeline---symbolic GR export (SymPy), typed integration (Rust), and document rendering (IOP journal \LaTeX)---for Novikov consistency verification on axisymmetric frame-dragging wormhole backgrounds.
-The complete companion codebase, including the discrete monodromy engine, SymPy exports, unit tests, and manuscript sources, is publicly available at
-\url{https://github.com/mauramyrez/ctc-discrete-monodromy}~\cite{PaniaguaRamirez2026CTC}
-(manuscript date: \manuscriptdate).
-The single, defensible contribution is:
+\subsection{Constructing and diagnosing $\MN$ in Rust}
 
-\begin{quote}
-\emph{We construct an explicit frame-dragging Morris--Thorne profile class, export its equatorial Einstein tensor symbolically, and demonstrate that a mass-gap--renormalized discrete monodromy operator is an $H^{1}$-proxy contraction with a unique Picard fixed point.}
-\end{quote}
+\begin{lstlisting}[language={}]
+use ctc_research_framework::dynamics::monodromy::{
+    default_forcing_vector, default_monodromy_operator,
+    find_fixed_point, find_fixed_point_inhomogeneous, PeriodicField,
+};
 
-In terms of the criteria~(C1)--(C4):
+let mut m = default_monodromy_operator(); // N=128, m^2=1, nu=1
+m.n_nodes = 64;
+let init = PeriodicField::new(
+    (0..m.n_nodes).map(|i| 1.0 + 0.1 * (i as f64)).collect(),
+);
+assert!(m.is_contraction());           // rho(K)<1 and L<1
+let fp0 = find_fixed_point(&init, &m)?; // homogeneous -> Phi* ~ 0
+assert!(fp0.field.l2_norm() < 1e-6);
+
+let source = default_forcing_vector(m.n_nodes);
+let zero = PeriodicField::new(vec![0.0; m.n_nodes]);
+let fp = find_fixed_point_inhomogeneous(&zero, &m, &source)?;
+assert!(fp.residual < 1e-8);
+assert!(fp.field.l2_norm() > 1e-3);    // nontrivial response
+\end{lstlisting}
+
+Default configuration parameters are summarized in Table~\ref{tab:params}.
+Measured discrete diagnostics for the reference profile appear in Table~\ref{tab:monodromy}.
+
+\begin{table}[H]
+\centering
+\caption{Default configuration parameters for the monodromy regression baseline.}
+\label{tab:params}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Parameter & Default value \\
+\midrule
+Profile & \texttt{ExplicitProfileParams::prd\_reference()} \\
+$r_{\mathrm{loop}}$ & $1.5\,r_{0}$ \\
+$m^{2}$, $\nu$, $N$ & $1$, $1$, $128$ \\
+Solver tolerance & $10^{-12}$ \\
+Test residual threshold & $10^{-8}$--$10^{-10}$ \\
+Picard iteration cap & $500$ (tests) / $10^{4}$ (solver) \\
+RK4 step / steps & $\Delta\tau=0.01$ / $200$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Discrete monodromy diagnostics at $r_{\mathrm{loop}}=1.5\,r_{0}$ ($m^{2}=1$, $\nu=1$).
+$\rho(K)$ via power iteration; $L$ is the grid-oscillation Lipschitz diagnostic; residuals are $\|\Phi_{k}-K\Phi_{k}\|_{2}$ after homogeneous Picard iteration (baseline). Inhomogeneous runs with default forcing $S$ yield nontrivial $\|\Phi^{*}\|_{2}$ at comparable residual tolerance.}
+\label{tab:monodromy}
+\begin{tabular}{@{}ccccc@{}}
+\toprule
+$N$ & $\rho(K)$ & $L$ & residual & Picard iterations \\
+\midrule
+$32$ & $0.702$ & $0.799$ & $7.8\times 10^{-13}$ & $79$ \\
+$64$ & $0.838$ & $0.896$ & $9.8\times 10^{-13}$ & $155$ \\
+$128$ & $0.915$ & $0.947$ & $9.9\times 10^{-13}$ & $308$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{CLI output shape}
+
+Running \texttt{cargo run --release --bin ctc-engine} prints a geometry line ($r_{\mathrm{ERGO}}$, $g_{tt}(r_{\mathrm{loop}})$), a homogeneous Picard table with columns
+\texttt{N}, \texttt{rho(K)}, \texttt{L\_osc}, \texttt{residual}, \texttt{iters}, \texttt{||Phi*||\_2} (matching Table~\ref{tab:monodromy} to working precision), an inhomogeneous $\Phi=K\Phi+S$ residual line, and a modular-kernel $\rho(K)$ comparison.
+Figure scripts under \texttt{scripts/plot\_spacetime\_diagrams.py} regenerate ergosurface, light-cone tipping, and geodesic-loop diagrams into \texttt{docs/figures/} for manuscript embedding.
+
+%%==============================================================================
+\section{Impact}
+\label{sec:impact}
+
+The primary impact of \texttt{ctc-discrete-monodromy} is software reuse and numerical hygiene rather than a claim of new physical law:
+
 \begin{itemize}
-  \item \textbf{(C1)} Explicit profiles~\eqref{eq:profiles} with flare-out, reference parameters~\eqref{eq:prd-params}, and equatorial chronology-violating locus~\eqref{eq:ctc-simple}, corroborated by metric and RK4 diagnostics.
-  \item \textbf{(C2)} SymPy-exported equatorial $\Gmn$ and NEC/WEC contractions as background constraints (Appendices~\ref{app:tensors}--\ref{app:energy}), not dynamically generated in Rust.
-  \item \textbf{(C3)} Unique Novikov fixed point for the renormalized discrete operator $\MN$ (Theorem~\ref{thm:novikov-stability}), with $17/17$ Rust tests, $\|K\|_{L^{2}}<1$, and Picard residual $<10^{-8}$ in $<500$ iterations for $N\in\{32,64,128\}$.
-  \item \textbf{(C4)} Analytic EFT proposal for a curvature-cutoff Hadamard bound (Proposition~\ref{prop:bounded-Tren}); not numerically computed.
+  \item \textbf{New research questions.}
+  Comparative modular kernels (\texttt{KernelKind}) and inhomogeneous discrete maps $\Phi=K\Phi+S$ are first-class APIs against a fixed regression baseline, enabling nontrivial response studies beyond the homogeneous null oracle.
+  \item \textbf{Improved pursuit of existing questions.}
+  Discrete-operator studies on frame-dragging axisymmetric profiles gain a citable, reproducible spectral/Picard harness instead of one-off notebooks~\cite{PaniaguaRamirez2026CTC}.
+  \item \textbf{Daily practice.}
+  Users obtain a single command path from profile construction to spectral/Picard reports and figure generation, reducing friction between symbolic metric documentation and numerical regression.
+  \item \textbf{Maintainability and performance.}
+  Explicit dimension asserts, MIT licensing, pinned Python dependencies, and a $17/17$ Cargo suite make the stack suitable for continuous integration; Rust LTO supports rapid $N\sim 10^{2}$ operator sweeps.
+  \item \textbf{Benchmarking role.}
+  Circulant row-normalization and grid-oscillation Lipschitz bounds act as portable test oracles: any future kernel variant that breaks $\rho(K)<1$ or Picard residual gates fails loudly under \texttt{cargo test}.
 \end{itemize}
 
-Global hyperbolicity is not restored once chronology-violating loci exist; Cauchy-problem statements remain local to chronology-respecting regions.
-Observational constraints and a continuum limit of $\MN$ without row renormalization are deferred to future work.
+As an initial public release (v0.1.0), adoption metrics and commercial use are not yet available; the intended near-term impact is archival citability and reuse within computational-relativity and numerical-analysis communities.
 
-\ack{Symbolic and numerical artifacts accompany this work in the open-source repository \texttt{ctc-discrete-monodromy}~\cite{PaniaguaRamirez2026CTC}.}
+%%==============================================================================
+\section{Conclusions}
+\label{sec:conclusions}
 
-\funding{This research received no specific grant from any funding agency in the public, commercial, or not-for-profit sectors.}
+We have delivered an open-source Rust/SymPy framework that builds explicit frame-dragging Morris--Thorne profiles, exports equatorial curvature assets symbolically, and benchmarks a mass-gap--renormalized discrete monodromy matrix with both homogeneous and inhomogeneous ($\Phi=K\Phi+S$) Picard diagnostics plus modular kernel comparison.
+The contribution is a robust, high-performance, and reproducible software artifact for discrete operator diagnostics on explicit metric profiles, with automated regression testing and clear separation between implemented numerics and analytical outlook.
+Source code, license (MIT), and documentation are permanently available at
+\url{https://github.com/mauramyrez/ctc-discrete-monodromy}~\cite{PaniaguaRamirez2026CTC}
+(manuscript date: \manuscriptdate).
 
-\roles{Mauricio Miguel Paniagua Ramirez: Conceptualization, Methodology, Software, Formal analysis, Writing -- original draft, Writing -- review \& editing.}
+\section*{Acknowledgements}
+\label{sec:ack}
+Symbolic and numerical artifacts accompany this SoftwareX Original Software Publication in the open-source repository \texttt{ctc-discrete-monodromy}.
 
-\data{The symbolic exports, Rust integration crate, unit tests, and figure-generation scripts that support the findings of this study are openly available in the GitHub repository \texttt{ctc-discrete-monodromy} at \url{https://github.com/mauramyrez/ctc-discrete-monodromy}~\cite{PaniaguaRamirez2026CTC} (accessed \manuscriptdate).}
-
-\suppdata{Appendices~\ref{app:tensors}--\ref{app:energy} collect the SymPy-exported equatorial Einstein-tensor components and NEC/WEC contractions used as static background assets (criterion~C2).}
-
-%==============================================================================
-\appendix
-
-\section{Full equatorial Einstein tensor components}
-\label{app:tensors}
-
-Substituting~\eqref{eq:profiles} at $\theta=\pi/2$, the non-zero components of $\Gmn$ and the Ricci scalar $R$ are collected below.
-Repeated factors are abbreviated for typographic clarity; the expansions are algebraically identical to the SymPy derivation and serve as symbolic background assets for criterion~(C2).
-\IfFileExists{appendix_tensor_components.tex}{\input{appendix_tensor_components.tex}}{}
-
-\section{Energy condition contractions}
-\label{app:energy}
-
-Null (NEC) and weak (WEC) contractions with the same profiles, treated as static background constraints rather than Rust-evolved stress-energy:
-\IfFileExists{appendix_energy_conditions.tex}{\input{appendix_energy_conditions.tex}}{}
-
-\section*{References}
-
-\bibliographystyle{unsrt}
+\bibliographystyle{elsarticle-num}
 \bibliography{references}
+
+\section*{Current executable software version}
+\label{sec:soft-version}
+
+\begin{table}[H]
+\small
+\begin{tabular}{|l|p{5.2cm}|p{6.8cm}|}
+\hline
+\textbf{Nr.} & \textbf{(Executable) software metadata description} & \textbf{Please fill in this column} \\
+\hline
+S1 & Current software version & 0.1.0 (\texttt{ctc-research-framework} / \texttt{ctc-engine}) \\
+\hline
+S2 & Permanent link to executables of this version & \url{https://github.com/mauramyrez/ctc-discrete-monodromy} \\
+\hline
+S3 & Legal Software License & MIT License \\
+\hline
+S4 & Computing platforms / Operating Systems & Windows, Linux, macOS \\
+\hline
+S5 & Installation requirements \& dependencies & See Table~\ref{tab:code-meta} (C5--C6); \texttt{cargo build --release}; \texttt{pip install -r requirements.txt} \\
+\hline
+S6 & If available, link to user manual---if formally published include a reference to the publication in the reference list & Repository README; this SoftwareX article \\
+\hline
+S7 & Support email for questions & 1912574a@umich.mx \\
+\hline
+\end{tabular}
+\caption{Software metadata (optional)}
+\label{tab:soft-meta}
+\end{table}
 
 \end{document}

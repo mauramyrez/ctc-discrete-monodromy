@@ -1,5 +1,27 @@
 % Semiclassical backreaction bounds — analytic EFT outlook (criterion C4)
 % Not implemented or verified by the Rust numerical suite.
+% Physical setting: equatorial ergoregion / ergosurface $\Sigma_{\mathrm{ERGO}}$,
+% not a compactly generated chronology horizon.
+
+\subsection{Physical motivation for non-minimal coupling}
+
+Wormhole throats supported by~\eqref{eq:profiles} necessarily involve regions of large curvature and, for the reference parameters~\eqref{eq:prd-params}, an equatorial ergoregion in which frame dragging dominates the stationary Killing norm~\eqref{eq:gtt}.
+In such backgrounds, a minimally coupled quantum scalar field is a severe idealization: curvature-induced effective masses, higher-curvature corrections, and finite-resolution effects all introduce intrinsic microscopic scales~\cite{BirrellDavies1982,Sotiriou2010}.
+A minimal model that retains a single additional coupling is the non-minimal scalar-tensor interaction $\zeta\,\phif R$.
+Dimensionally, $\zeta\,\phif$ carries units of length squared (in geometric units), so the combination
+\begin{equation}
+\label{eq:l-star-heuristic}
+\ell_{\star}^{2}\sim \frac{\hbar\,|\zeta\,\phif|}{|R|}
+\end{equation}
+defines a curvature-referenced cutoff length.
+Near $\Sigma_{\mathrm{ERGO}}$, where light-cone tipping is strongest and curvature invariants remain finite but non-negligible for the present profiles, $\ell_{\star}$ provides a natural ultraviolet floor beneath which a local effective description of $\langle\Tmn\rangle_{\mathrm{ren}}$ should not be trusted without additional degrees of freedom.
+
+We emphasize the logical status of this construction:
+\begin{itemize}
+  \item $\zeta\,\phif R$ is an EFT deformation of the field sector, not a dynamical mechanism that creates or destroys an ergoregion;
+  \item $\ell_{\star}$ is a modeling scale inferred from background curvature, not an output of the Rust monodromy engine;
+  \item the resulting estimate is a qualitative regulator near $\Sigma_{\mathrm{ERGO}}$; it does not assert chronology protection, continuum QFT theorems, or a numerical evaluation of $\langle\Tmn\rangle_{\mathrm{ren}}$.
+\end{itemize}
 
 \subsection{Hadamard parametrix in four dimensions}
 
@@ -34,7 +56,7 @@ equivalent to a minimally coupled field with curvature-induced effective mass
 \label{eq:m-eff}
 m_{\mathrm{eff}}^{2}(x)=m^{2}+\zeta R(x)
 \end{equation}
-(distinct from the azimuthal mode mass $m_{\ast}$ of Sec.~\ref{sec:novikov}).
+(distinct from the azimuthal mode mass $m_{\ast}$ of the discrete monodromy diagnostics).
 The Hadamard coefficient $u(x,x')$ acquires a curvature-dependent correction
 $u\to u[1+\tfrac16\zeta R\,\sigma+O(\sigma^{2})]$, and the coincidence
 pole $1/\sigma_{\epsilon}$ is \emph{proposed} to be regulated by the intrinsic
@@ -42,102 +64,115 @@ length scale
 \begin{equation}
 \label{eq:l-star-full}
 \ell_{\star}
-=\Bigl(\frac{\hbar\,|\zeta\,\phif|}{|R|_{\Sigma_{\mathrm{CH}}}}\Bigr)^{\!1/2},
+=\Bigl(\frac{\hbar\,|\zeta\,\phif|}{|R|_{\Sigma_{\mathrm{ERGO}}}}\Bigr)^{\!1/2},
 \end{equation}
 obtained by balancing the $\sigma^{-1}$ term against the
-curvature-induced mass in~\eqref{eq:m-eff}.
+curvature-induced mass in~\eqref{eq:m-eff} on the ergosurface.
 This cutoff is an EFT modeling assumption, not a quantity computed by the
 present numerical engine.
 
 \subsection{\texorpdfstring{Null-winding truncation and a proposed bound on $\langle T_{\mu\nu}\rangle_{\mathrm{ren}}$}{Null-winding truncation and a proposed bound on renormalized stress-energy}}
 
-Near the chronology horizon, null geodesics wind $n$ times about the throat
-with proper-length scales $\Delta\ell_{n}\sim 2\pi n r_{\mathrm{CH}}$.
-Kim--Thorne~\cite{KimThorne1991} show that each winding contributes
-$(\Delta\ell_{n})^{-4}$ to $\langle\Tmn\rangle_{\mathrm{ren}}$.
-Summing over windings,
+In the chronology-horizon literature, null geodesics winding $n$ times about a
+causality boundary with proper-length scales $\Delta\ell_{n}\sim 2\pi n r_{\mathrm{CH}}$
+each contribute $(\Delta\ell_{n})^{-4}$ to $\langle\Tmn\rangle_{\mathrm{ren}}$~\cite{KimThorne1991}.
+We adapt that bookkeeping to the present ergoregion setting by replacing the
+hypothetical chronology radius $r_{\mathrm{CH}}$ with the ergosurface scale
+$r_{\mathrm{ERGO}}$, which controls the proper circumference of equatorial
+null windings near $\Sigma_{\mathrm{ERGO}}$:
 \begin{equation}
 \label{eq:winding-sum}
 \sum_{n=1}^{\infty}(\Delta\ell_{n})^{-4}
 \;\sim\;
-\sum_{n=1}^{\infty}(2\pi n r_{\mathrm{CH}})^{-4}.
+\sum_{n=1}^{\infty}(2\pi n r_{\mathrm{ERGO}})^{-4}.
 \end{equation}
-In the minimal-coupling limit the ultraviolet coincidence scale
-$\Delta\ell\to 0$ as the horizon is approached, producing the
-$(\Delta\ell)^{-4}$ blue-shift pole independently of the convergent
-$p$-series tail of~\eqref{eq:winding-sum}.
+In a minimal-coupling idealization with vanishing coincidence scale
+$\Delta\ell\to 0$, one recovers the familiar $(\Delta\ell)^{-4}$ blue-shift pole,
+independently of the convergent $p$-series tail of~\eqref{eq:winding-sum}.
 
 With the scalar-tensor cutoff~\eqref{eq:l-star-full}, the Hadamard
 coincidence tube is smeared at radius $\ell_{\star}$: modes with
 proper separation below $\ell_{\star}$ are suppressed by the modified
 coefficient $v(x,x')$ carrying $\ln(\sigma_{\epsilon}/\mu^{2})$.
-The number of resolvable windings about a circle of radius $r_{\mathrm{CH}}$
+The number of resolvable windings about a circle of radius $r_{\mathrm{ERGO}}$
 is therefore bounded by
 \begin{equation}
 \label{eq:n-max}
-n_{\max}\sim \frac{2\pi r_{\mathrm{CH}}}{\ell_{\star}}
-= 2\pi r_{\mathrm{CH}}
-\Bigl(\frac{|R|_{\Sigma_{\mathrm{CH}}}}{\hbar\,|\zeta\,\phif|}\Bigr)^{\!1/2},
+n_{\max}\sim \frac{2\pi r_{\mathrm{ERGO}}}{\ell_{\star}}
+= 2\pi r_{\mathrm{ERGO}}
+\Bigl(\frac{|R|_{\Sigma_{\mathrm{ERGO}}}}{\hbar\,|\zeta\,\phif|}\Bigr)^{\!1/2},
 \end{equation}
 and the regulated partial sum satisfies
 \begin{equation}
 \label{eq:truncated-sum}
 \sum_{n=1}^{n_{\max}}(\Delta\ell_{n})^{-4}
-\le \frac{1}{(2\pi r_{\mathrm{CH}})^{4}}
+\le \frac{1}{(2\pi r_{\mathrm{ERGO}})^{4}}
 \sum_{n=1}^{n_{\max}}\frac{1}{n^{4}}
-<\frac{\pi^{4}}{90\,(2\pi r_{\mathrm{CH}})^{4}}<\infty.
+<\frac{\pi^{4}}{90\,(2\pi r_{\mathrm{ERGO}})^{4}}<\infty.
 \end{equation}
 
-\begin{proposition}[Proposed renormalized stress-energy bound; EFT outlook]
+\begin{proposition}[Qualitative renormalized stress-energy estimate; analytical outlook only]
 \label{prop:bounded-Tren}
 Let $\phif$ satisfy~\eqref{eq:modified-kg} on the background~\eqref{eq:metric}
-with $m_{\mathrm{eff}}^{2}>0$ in a neighborhood of the chronology horizon,
+with $m_{\mathrm{eff}}^{2}>0$ in a neighborhood of the ergosurface $\Sigma_{\mathrm{ERGO}}$,
 and assume a Hadamard parametrix of the form~\eqref{eq:hadamard} with
 renormalization scale $\mu$.
-Then, \emph{within the cutoff-regulated scalar-tensor sector defined by}
-$\ell_{\star}$, the renormalized stress-energy is proposed to satisfy
+Then, \emph{within the cutoff-regulated scalar-tensor modeling sector defined by}
+$\ell_{\star}$, one may write the formal estimate
 \begin{equation}
 \label{eq:master-bound}
 \bigl\|
 \langle\Tmn\rangle_{\mathrm{ren}}
-\bigr\|_{\infty,\Sigma_{\mathrm{CH}}}
-\le
+\bigr\|_{\infty,\Sigma_{\mathrm{ERGO}}}
+\lesssim
 \frac{\hbar}{4\pi^{2}\,\ell_{\star}^{4}}
 =
-\frac{|R|_{\Sigma_{\mathrm{CH}}}^{2}}{4\pi^{2}\,\hbar\,(\zeta\,\phif)^{2}}
+\frac{|R|_{\Sigma_{\mathrm{ERGO}}}^{2}}{4\pi^{2}\,\hbar\,(\zeta\,\phif)^{2}}
 <\infty,
 \end{equation}
 where $\ell_{\star}$ is given by~\eqref{eq:l-star-full}.
 The null-winding sum~\eqref{eq:winding-sum} is truncated at
 $n_{\max}$~\eqref{eq:n-max}, yielding the finite estimate~\eqref{eq:truncated-sum}.
-This statement is an analytic EFT proposal; it is not numerically verified
-by the Rust monodromy or geodesic engines of Sec.~\ref{sec:novikov}.
+This statement is a \emph{qualitative EFT outlook} adapted to an ergoregion geometry;
+it is not a derived computational theorem, not a chronology-protection result, and it is
+not numerically verified by the Rust monodromy or geodesic engines.
 \end{proposition}
 
-\begin{proof}[Sketch]
+\begin{proof}[Heuristic sketch]
 Substituting~\eqref{eq:hadamard} into the point-splitting formula
 $\langle\Tmn\rangle_{\mathrm{ren}}=\lim_{x'\to x}
 \mathcal{T}_{\mu\nu}[G^{(1)}(x,x')]$~\cite{BirrellDavies1982},
 the $\sigma^{-2}$ coincidence divergence is canceled by the
 $i\epsilon$ prescription and the renormalization of $v$.
-The remaining $\sigma^{-1}$ contribution is regulated by
+The remaining $\sigma^{-1}$ contribution is modeled as regulated by
 $m_{\mathrm{eff}}^{2}$ from~\eqref{eq:m-eff}: for $m_{\mathrm{eff}}^{2}>0$
 the massive parametrix supplies the factor
 $\exp(-m_{\mathrm{eff}}\sqrt{2\sigma})$ as $\sigma\to 0$.
-On the chronology horizon, the Kim--Thorne ultraviolet pole arises from
-the vanishing coincidence scale $\Delta\ell\to 0$; the scalar-tensor
-smearing replaces $\Delta\ell$ by $\ell_{\star}$, bounding the local
-contribution by $\hbar/(4\pi^{2}\ell_{\star}^{4})$.
+Near $\Sigma_{\mathrm{ERGO}}$, the ultraviolet sensitivity of vacuum polarization
+is controlled by the coincidence scale; the scalar-tensor smearing replaces
+an idealized $\Delta\ell\to 0$ by $\ell_{\star}$, motivating the local
+scale $\hbar/(4\pi^{2}\ell_{\star}^{4})$.
 Independently, the winding sum is truncated at $n_{\max}$~\eqref{eq:n-max},
 so that~\eqref{eq:truncated-sum} remains finite.
 Combining the ultraviolet cutoff with the truncated winding sum
-motivates~\eqref{eq:master-bound} as an EFT bound.
+motivates~\eqref{eq:master-bound} as a qualitative EFT estimate on the ergosurface.
 \end{proof}
 
-For a static observer in the chronology-respecting region,
+For a static observer outside the ergoregion ($g_{tt}<0$),
 \begin{equation}
 \label{eq:rho-ren-bound}
 \bigl|\langle\rho\rangle_{\mathrm{ren}}\bigr|
 \le \hbar/(4\pi^{2}\ell_{\star}^{4}) < \infty
 \end{equation}
 is the corresponding formal density estimate under the same cutoff assumption.
+
+\paragraph{Relation to background curvature scales.}
+Because $\ell_{\star}$ tracks $|R|^{-1/2}$ at $\Sigma_{\mathrm{ERGO}}$, the bound
+tightens in weakly curved dragging regions and loosens only when the curvature
+invariant becomes large.
+For the explicit profiles~\eqref{eq:profiles}, $R$ remains finite for $r>r_{0}$,
+so $\ell_{\star}$ is a finite positive scale once $\zeta\,\phif\neq 0$.
+This curvature linkage is the principal physical justification for preferring
+$\zeta\,\phif R$ over an \emph{ad hoc} fixed cutoff: the regulator is tied to
+the same geometric data that define the ergoregion, while remaining strictly
+outside the certified numerical scope of criterion~(C3).

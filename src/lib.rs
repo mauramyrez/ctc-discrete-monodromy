@@ -1,12 +1,18 @@
-//! CTC Research Framework library.
+//! High-performance Rust framework for discrete operator diagnostics on
+//! axisymmetric background profiles.
 //!
 //! Signature: (−+++). Geometric units \(c = G = 1\).
 //!
-//! Computational status mirrors the manuscript criteria (C1)–(C4):
-//! - **(C1)** Explicit frame-dragging Morris–Thorne profiles and CTC locus (implemented).
-//! - **(C2)** SymPy-exported equatorial Einstein / energy-condition assets (static; not Rust-dynamical).
-//! - **(C3)** Discrete Yukawa-proxy monodromy \(\mathcal{M}_N\) Banach–Picard contraction (core Rust result).
-//! - **(C4)** Curvature-cutoff Hadamard bound (analytic EFT outlook only; not computed here).
+//! Pipeline capabilities:
+//! - Explicit frame-dragging Morris–Thorne profiles and equatorial ergoregion locus.
+//! - SymPy-exported equatorial Einstein / energy-condition assets (static; not Rust-dynamical).
+//! - Discrete monodromy \(\mathcal{M}_N\) spectral / Picard diagnostics, including the
+//!   inhomogeneous map \(\Phi = K\Phi + S\) and modular kernel comparison.
+//! - Curvature-cutoff Hadamard estimate near \(\Sigma_{\mathrm{ERGO}}\) remains an
+//!   analytical EFT outlook only (not computed by this engine).
+//!
+//! Certified numerical claims refer to discrete operator diagnostics on explicit
+//! metric profiles—not continuum field theorems.
 
 pub mod algebra;
 pub mod dynamics;
@@ -14,5 +20,5 @@ pub mod energy;
 
 #[cfg(test)]
 mod tests {
-    mod novikov_test;
+    mod monodromy_test;
 }
