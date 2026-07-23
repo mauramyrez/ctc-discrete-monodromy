@@ -28,10 +28,12 @@ docs/*.synctex.gz
 docs/*.spl
 docs/paper.pdf
 
-# Local template fetches / legacy journal class (do not publish)
+# Local template fetches / legacy journal materials (do not publish)
 docs/_fetch/
 docs/iopjournal.cls
 docs/softwarex-software-update-template.tex
+docs/orcid.pdf
+examples/
 
 # Keep vector figures; ignore accidental rasters if huge
 docs/figures/*.png

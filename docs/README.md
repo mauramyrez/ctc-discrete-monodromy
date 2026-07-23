@@ -14,8 +14,9 @@ Compile with a standard TeX Live / MiKTeX install (`elsarticle` class).
 
 | File | Role |
 |------|------|
-| [`softwarex-osp-template.tex`](softwarex-osp-template.tex) | Official blank OSP template (keep for compliance checks) |
-| ~~software-update template~~ | **Not used.** This release is a first OSP, not a software-update article. |
+| [`softwarex-osp-template.tex`](softwarex-osp-template.tex) | Official blank OSP template (reference only) |
+
+Do **not** use a software-update template: this release is a first OSP, not an update article.
 
 ## What not to ship / not to submit
 
