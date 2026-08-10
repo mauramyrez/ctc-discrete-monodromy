@@ -1,21 +1,24 @@
-//! Discrete operator diagnostics for row-normalized circulant kernels on \(\mathbb{R}^N\).
+//! Discrete operator diagnostics for circulant kernels on \(\mathbb{R}^N\).
 //!
 //! This module builds explicit metric-sampled kernels on azimuthal loops and exposes
 //! spectral / Picard regression oracles. Continuous Yukawa structure only *motivates*
-//! kernel shapes; certified claims refer strictly to the discrete map
+//! kernel shapes.
 //!
-//!   \(K_{ij} = \widetilde{K}_{ij}\,\mathrm{e}^{-m_*\Delta\tau}/\sum_k\widetilde{K}_{ik}\)
+//! Two assembly policies are supported via [`RenormPolicy`]:
+//! - [`RenormPolicy::RowSumBenchmark`]: row-sum renormalization
+//!   \(K_{ij}=\widetilde{K}_{ij}\,\mathrm{e}^{-m_*\Delta\tau}/\sum_k\widetilde{K}_{ik}\)
+//!   (legacy SoftwareX / regression gate; contractive by construction when \(m_*>0\)).
+//! - [`RenormPolicy::None`]: physical proxy kernel \(\widetilde{K}\) with **no** forced
+//!   row-sum fix — used for Path-3 continuum stress tests (\(\rho(\widetilde{K}_N)\) vs \(N,m^2\)).
 //!
-//! and to the (optionally inhomogeneous) fixed-point residual
-//! \(\|\Phi - K\Phi - S\|_2\). Homogeneous baselines (\(S=0\)) converge to \(\Phi^*=0\);
-//! nonzero forcing \(S\) yields a nontrivial response \(\Phi^*=(I-K)^{-1}S\) under the
-//! contraction gate \(\rho(K)<1\).
+//! Homogeneous baselines (\(S=0\)) under a contraction gate converge to \(\Phi^*=0\);
+//! nonzero forcing \(S\) yields \(\Phi^*=(I-K)^{-1}S\) when \(\rho(K)<1\).
 
 use crate::algebra::metric_numeric::{metric_at, MorrisThorneParams};
 
 use anyhow::Result;
 
-/// Modular discrete kernel family used to assemble \(\widetilde{K}\) before row renormalization.
+/// Modular discrete kernel family used to assemble \(\widetilde{K}\) before optional renormalization.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum KernelKind {
     /// Yukawa-proxy sample \(m_*/(4\pi\,ds)\,\mathrm{e}^{-m_* ds}\) (default regression kernel).
@@ -28,6 +31,20 @@ impl Default for KernelKind {
     fn default() -> Self {
         Self::YukawaProxy
     }
+}
+
+/// Row-assembly policy for the discrete monodromy kernel.
+///
+/// Path 3 of the research audit: [`RenormPolicy::None`] exposes the physical proxy
+/// \(\widetilde{K}\) so continuum contractivity can fail; [`RenormPolicy::RowSumBenchmark`]
+/// preserves the historical forced-contraction regression behavior.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+pub enum RenormPolicy {
+    /// Physical / continuum-stress kernel: return \(\widetilde{K}\) without row-sum scaling.
+    None,
+    /// Legacy benchmarking: force every row sum to \(\mathrm{e}^{-m_*\Delta\tau}<1\).
+    #[default]
+    RowSumBenchmark,
 }
 
 /// Discrete field samples \(\Phi_i\) on uniform nodes \(\chi_i = 2\pi i / N\).
@@ -126,8 +143,9 @@ pub fn apply_kernel(kernel: &[Vec<f64>], field: &[f64]) -> Vec<f64> {
 
 /// Discrete monodromy / circulant-kernel operator \(\mathcal{M}_N\) on \(\mathbb{R}^N\).
 ///
-/// Builds a row-sum renormalized kernel \(K\) from a modular proxy sample with
-/// mode-augmented mass \(m_*\). Certified claims are discrete-operator diagnostics only.
+/// Builds a proxy kernel from a modular sample with mode-augmented mass \(m_*\).
+/// Whether row-sum renormalization is applied is controlled by [`RenormPolicy`].
+/// Certified claims are discrete-operator diagnostics only.
 #[derive(Clone, Debug)]
 pub struct DiscreteMonodromyOperator {
     /// Loop radius \(r > r_0\) (outside throat).
@@ -142,6 +160,8 @@ pub struct DiscreteMonodromyOperator {
     pub n_nodes: usize,
     /// Modular kernel family for \(\widetilde{K}\) assembly.
     pub kernel_kind: KernelKind,
+    /// Row-assembly policy (`RowSumBenchmark` = legacy; `None` = physical \(\widetilde{K}\)).
+    pub renorm: RenormPolicy,
 }
 
 /// Alias retained for callers that prefer the shorter paper-facing name.
@@ -193,11 +213,32 @@ impl DiscreteMonodromyOperator {
         }
     }
 
-    /// Build the row-sum renormalized discrete kernel \(K\).
+    /// Build the discrete kernel under the active [`RenormPolicy`].
     ///
-    /// Row renormalization by \(\mathrm{e}^{-m_*\Delta\tau}\) is an **explicit**
-    /// benchmarking step of the discrete operator definition \(\mathcal{M}_N\).
+    /// - [`RenormPolicy::None`]: physical proxy \(\widetilde{K}_{ij}=G(\Delta s)\,\Delta\tau\) (no row fix).
+    /// - [`RenormPolicy::RowSumBenchmark`]: force row sums to \(\mathrm{e}^{-m_*\Delta\tau}\).
     pub fn build_kernel_matrix(&self) -> Vec<Vec<f64>> {
+        let mut kernel = self.build_raw_kernel_matrix();
+        if self.renorm == RenormPolicy::RowSumBenchmark {
+            let g_pp = self.g_phiphi();
+            let delta_tau = (g_pp * self.dphi() * self.dphi()).sqrt();
+            let mass_gap = (-self.m_star() * delta_tau).exp();
+            let n = self.n_nodes;
+            for i in 0..n {
+                let row_sum: f64 = kernel[i].iter().sum();
+                if row_sum > 1e-15 {
+                    let scale = mass_gap / row_sum;
+                    for k in 0..n {
+                        kernel[i][k] *= scale;
+                    }
+                }
+            }
+        }
+        kernel
+    }
+
+    /// Unnormalized proxy kernel \(\widetilde{K}\) (always ignores [`RenormPolicy`]).
+    pub fn build_raw_kernel_matrix(&self) -> Vec<Vec<f64>> {
         let n = self.n_nodes;
         let g_pp = self.g_phiphi();
         let delta_tau = (g_pp * self.dphi() * self.dphi()).sqrt();
@@ -212,17 +253,12 @@ impl DiscreteMonodromyOperator {
                 kernel[i][j] = self.proxy_sample(ds) * delta_tau;
             }
         }
-        let mass_gap = (-self.m_star() * delta_tau).exp();
-        for i in 0..n {
-            let row_sum: f64 = kernel[i].iter().sum();
-            if row_sum > 1e-15 {
-                let scale = mass_gap / row_sum;
-                for k in 0..n {
-                    kernel[i][k] *= scale;
-                }
-            }
-        }
         kernel
+    }
+
+    /// Spectral radius of the **unnormalized** proxy \(\widetilde{K}\) (Path-3 diagnostic).
+    pub fn unnormalized_spectral_radius(&self) -> f64 {
+        spectral_radius_of(&self.build_raw_kernel_matrix())
     }
 
     pub fn apply(&self, field: &PeriodicField) -> PeriodicField {
@@ -442,6 +478,8 @@ pub fn banach_verification(m: &DiscreteMonodromyOperator) -> bool {
 }
 
 /// Default \(\mathcal{M}_N\) on the reference profile at \(r_{\mathrm{loop}}=1.5\,r_0\), \(N=128\).
+///
+/// Uses [`RenormPolicy::RowSumBenchmark`] so existing regression tests remain contractive.
 pub fn default_monodromy_operator() -> DiscreteMonodromyOperator {
     use crate::algebra::metric_profiles::ExplicitProfileParams;
     let prof = ExplicitProfileParams::prd_reference();
@@ -453,7 +491,425 @@ pub fn default_monodromy_operator() -> DiscreteMonodromyOperator {
         azimuthal_mode: 1,
         n_nodes: 128,
         kernel_kind: KernelKind::YukawaProxy,
+        renorm: RenormPolicy::RowSumBenchmark,
     }
+}
+
+/// Default operator with [`RenormPolicy::None`] (physical \(\widetilde{K}\), Path-3 stress tests).
+pub fn default_unnormalized_monodromy_operator() -> DiscreteMonodromyOperator {
+    let mut m = default_monodromy_operator();
+    m.renorm = RenormPolicy::None;
+    m
+}
+
+/// One sample of \(\rho(\widetilde{K}_N)\) on the Path-3 continuum grid.
+#[derive(Clone, Debug)]
+pub struct UnnormalizedSpectralSample {
+    pub n_nodes: usize,
+    pub m_squared: f64,
+    /// Azimuthal mode \(\nu\) used in \(m_*=\sqrt{m^2+\nu^2/g_{\varphi\varphi}}\).
+    pub azimuthal_mode: i32,
+    pub kernel_kind: KernelKind,
+    pub rho: f64,
+    /// Mean absolute row sum of \(\widetilde{K}\) (proxy for \(\|G\|_{L^1}\) scale).
+    pub mean_row_sum: f64,
+    /// `true` iff \(\rho(\widetilde{K}_N) < 1\).
+    pub contractive: bool,
+}
+
+impl UnnormalizedSpectralSample {
+    pub fn ruptured(&self) -> bool {
+        !self.contractive
+    }
+}
+
+/// Configuration for an unnormalized Path-3 spectral sweep.
+#[derive(Clone, Debug)]
+pub struct UnnormalizedSweepConfig {
+    pub n_values: Vec<usize>,
+    pub m_squared_values: Vec<f64>,
+    pub azimuthal_mode: i32,
+    pub kernel_kind: KernelKind,
+}
+
+impl Default for UnnormalizedSweepConfig {
+    fn default() -> Self {
+        Self {
+            n_values: path3_default_n_grid().to_vec(),
+            m_squared_values: path3_default_m2_grid().to_vec(),
+            azimuthal_mode: 1,
+            kernel_kind: KernelKind::YukawaProxy,
+        }
+    }
+}
+
+/// Legacy continuum stress grid: \(N\in\{32,64,128,256\}\).
+pub fn path3_default_n_grid() -> [usize; 4] {
+    [32, 64, 128, 256]
+}
+
+/// High-resolution continuum grid including \(N\in\{512,1024\}\).
+pub fn path3_extended_n_grid() -> [usize; 6] {
+    [32, 64, 128, 256, 512, 1024]
+}
+
+/// Legacy bare-mass grid: \(m^2\in\{1,10^{-2},10^{-4}\}\).
+pub fn path3_default_m2_grid() -> [f64; 3] {
+    [1.0, 1e-2, 1e-4]
+}
+
+/// Ultra-low mass grid probing \(m^2\to 0\) (Coulomb / logarithmic regime when \(\nu=0\)).
+pub fn path3_ultralow_m2_grid() -> [f64; 6] {
+    [1.0, 1e-2, 1e-4, 1e-8, 1e-12, 0.0]
+}
+
+/// Path-3 high-res + \(\nu=0\) Coulomb/log configuration (exponential kernel).
+pub fn path3_coulomb_sweep_config() -> UnnormalizedSweepConfig {
+    UnnormalizedSweepConfig {
+        n_values: path3_extended_n_grid().to_vec(),
+        m_squared_values: path3_ultralow_m2_grid().to_vec(),
+        azimuthal_mode: 0,
+        kernel_kind: KernelKind::ExponentialDecay,
+    }
+}
+
+/// Path-3 high-res + \(\nu=0\) with Yukawa proxy (prefactor \(\propto m_*\to 0\)).
+pub fn path3_yukawa_nu0_sweep_config() -> UnnormalizedSweepConfig {
+    UnnormalizedSweepConfig {
+        n_values: path3_extended_n_grid().to_vec(),
+        m_squared_values: path3_ultralow_m2_grid().to_vec(),
+        azimuthal_mode: 0,
+        kernel_kind: KernelKind::YukawaProxy,
+    }
+}
+
+fn mean_abs_row_sum(kernel: &[Vec<f64>]) -> f64 {
+    let n = kernel.len();
+    if n == 0 {
+        return 0.0;
+    }
+    let mut acc = 0.0;
+    for row in kernel {
+        acc += row.iter().map(|x| x.abs()).sum::<f64>();
+    }
+    acc / n as f64
+}
+
+/// Compute \(\rho(\widetilde{K}_N)\) for each pair \((N,m^2)\) on the unnormalized kernel.
+///
+/// Always assembles \(\widetilde{K}\) via [`DiscreteMonodromyOperator::build_raw_kernel_matrix`],
+/// independent of the operator's [`RenormPolicy`] field. Uses default \(\nu=1\), Yukawa.
+pub fn sweep_unnormalized_spectral_radius(
+    n_values: &[usize],
+    m_squared_values: &[f64],
+) -> Vec<UnnormalizedSpectralSample> {
+    sweep_unnormalized_spectral_radius_with(UnnormalizedSweepConfig {
+        n_values: n_values.to_vec(),
+        m_squared_values: m_squared_values.to_vec(),
+        ..UnnormalizedSweepConfig::default()
+    })
+}
+
+/// Full Path-3 sweep with configurable \(\nu\), kernel family, and grids.
+pub fn sweep_unnormalized_spectral_radius_with(
+    config: UnnormalizedSweepConfig,
+) -> Vec<UnnormalizedSpectralSample> {
+    let mut base = default_unnormalized_monodromy_operator();
+    base.azimuthal_mode = config.azimuthal_mode;
+    base.kernel_kind = config.kernel_kind;
+    let mut out =
+        Vec::with_capacity(config.n_values.len() * config.m_squared_values.len());
+    for &m2 in &config.m_squared_values {
+        for &n in &config.n_values {
+            base.n_nodes = n;
+            base.m_squared = m2;
+            let kernel = base.build_raw_kernel_matrix();
+            let rho = spectral_radius_of(&kernel);
+            out.push(UnnormalizedSpectralSample {
+                n_nodes: n,
+                m_squared: m2,
+                azimuthal_mode: config.azimuthal_mode,
+                kernel_kind: config.kernel_kind,
+                rho,
+                mean_row_sum: mean_abs_row_sum(&kernel),
+                contractive: rho < 1.0,
+            });
+        }
+    }
+    out
+}
+
+fn kernel_kind_label(kind: KernelKind) -> &'static str {
+    match kind {
+        KernelKind::YukawaProxy => "YukawaProxy",
+        KernelKind::ExponentialDecay => "ExponentialDecay",
+    }
+}
+
+/// Asymptotic / limit diagnostics extracted from a single \((m^2,\nu,\mathrm{kernel})\) series in \(N\).
+#[derive(Clone, Debug)]
+pub struct ContinuumLimitTrace {
+    pub m_squared: f64,
+    pub azimuthal_mode: i32,
+    pub kernel_kind: KernelKind,
+    pub rho_at_512: Option<f64>,
+    pub rho_at_1024: Option<f64>,
+    pub mean_row_sum_at_1024: Option<f64>,
+    /// \(\rho(1024)-\rho(512)\) when both exist.
+    pub delta_rho_512_to_1024: Option<f64>,
+    /// Crude two-point extrapolation \(\rho_\infty \approx 2\rho_{1024}-\rho_{512}\) (constant step in \(N\to 2N\)).
+    pub rho_infty_extrapolation: Option<f64>,
+    pub crossed_unity: bool,
+    pub verdict: String,
+}
+
+/// Build continuum-limit traces grouped by \((m^2,\nu,\mathrm{kernel})\).
+pub fn continuum_limit_traces(samples: &[UnnormalizedSpectralSample]) -> Vec<ContinuumLimitTrace> {
+    let mut keys: Vec<(u64, i32, KernelKind)> = Vec::new();
+    for s in samples {
+        let key = (s.m_squared.to_bits(), s.azimuthal_mode, s.kernel_kind);
+        if !keys.contains(&key) {
+            keys.push(key);
+        }
+    }
+    let mut traces = Vec::with_capacity(keys.len());
+    for (m_bits, nu, kind) in keys {
+        let m2 = f64::from_bits(m_bits);
+        let series: Vec<&UnnormalizedSpectralSample> = samples
+            .iter()
+            .filter(|s| {
+                s.m_squared.to_bits() == m_bits
+                    && s.azimuthal_mode == nu
+                    && s.kernel_kind == kind
+            })
+            .collect();
+        let rho_at = |n: usize| series.iter().find(|s| s.n_nodes == n).map(|s| s.rho);
+        let row_at = |n: usize| {
+            series
+                .iter()
+                .find(|s| s.n_nodes == n)
+                .map(|s| s.mean_row_sum)
+        };
+        let r512 = rho_at(512);
+        let r1024 = rho_at(1024);
+        let delta = match (r512, r1024) {
+            (Some(a), Some(b)) => Some(b - a),
+            _ => None,
+        };
+        let extrap = match (r512, r1024) {
+            (Some(a), Some(b)) => Some(2.0 * b - a),
+            _ => None,
+        };
+        let crossed = series.iter().any(|s| s.ruptured());
+        let verdict = match (r1024, delta, extrap, crossed) {
+            (Some(r), _, _, true) if r >= 1.0 => {
+                format!("RUPTURE at/before N=1024 (ρ={r:.6e} ≥ 1)")
+            }
+            (Some(r), Some(d), Some(e), false) if d > 0.0 && e >= 1.0 => {
+                format!(
+                    "growing toward rupture: ρ(1024)={r:.6e}, Δρ={d:.3e}, ρ_∞~{e:.6e} ≥ 1 (extrapolated)"
+                )
+            }
+            (Some(r), Some(d), Some(e), false) if d.abs() < 1e-4 => {
+                format!(
+                    "asymptotically flat below unity: ρ(1024)={r:.6e}, |Δρ|={:.3e}, ρ_∞~{e:.6e}",
+                    d.abs()
+                )
+            }
+            (Some(r), Some(d), Some(e), false) if d > 0.0 && e < 1.0 => {
+                format!(
+                    "growing but extrapolated ρ_∞={e:.6e} < 1 (still contractive at continuum proxy)"
+                )
+            }
+            (Some(r), Some(d), Some(e), false) if d < 0.0 => {
+                format!(
+                    "decreasing with N: ρ(1024)={r:.6e}, Δρ={d:.3e}, ρ_∞~{e:.6e}"
+                )
+            }
+            (Some(r), _, _, false) => format!("contractive at N=1024 with ρ={r:.6e}"),
+            _ => "incomplete high-N series (need N=512 and N=1024)".to_string(),
+        };
+        traces.push(ContinuumLimitTrace {
+            m_squared: m2,
+            azimuthal_mode: nu,
+            kernel_kind: kind,
+            rho_at_512: r512,
+            rho_at_1024: r1024,
+            mean_row_sum_at_1024: row_at(1024),
+            delta_rho_512_to_1024: delta,
+            rho_infty_extrapolation: extrap,
+            crossed_unity: crossed,
+            verdict,
+        });
+    }
+    traces
+}
+
+/// Format a Path-3 sweep table (for CLI / `--nocapture` tests).
+pub fn format_unnormalized_spectral_sweep(samples: &[UnnormalizedSpectralSample]) -> String {
+    let nu = samples.first().map(|s| s.azimuthal_mode).unwrap_or(1);
+    let kind = samples
+        .first()
+        .map(|s| kernel_kind_label(s.kernel_kind))
+        .unwrap_or("?");
+    let mut s = format!(
+        "Path-3 unnormalized spectral sweep  ρ(K̃_N)\n\
+         kernel={kind}  ν={nu}\n\
+         =========================================================================\n\
+         m^2          N      rho(K̃)     row_sum     contractive?\n\
+         -------------------------------------------------------------------------\n"
+    );
+    for sample in samples {
+        let flag = if sample.contractive {
+            "yes (ρ<1)"
+        } else {
+            "NO  (ρ≥1)  ← rupture"
+        };
+        s.push_str(&format!(
+            "{:<12.1e} {:<6} {:<10.6e} {:<10.6e} {}\n",
+            sample.m_squared, sample.n_nodes, sample.rho, sample.mean_row_sum, flag
+        ));
+    }
+    let n_rupture = samples.iter().filter(|x| x.ruptured()).count();
+    s.push_str("-------------------------------------------------------------------------\n");
+    s.push_str(&format!(
+        "ruptures: {n_rupture} / {}\n",
+        samples.len()
+    ));
+
+    let traces = continuum_limit_traces(samples);
+    if !traces.is_empty() {
+        s.push_str("\nContinuum-limit traces (N=512 → N=1024)\n");
+        s.push_str("-------------------------------------------------------------------------\n");
+        for t in &traces {
+            s.push_str(&format!(
+                "m²={:.1e}  ν={}  {}: {}\n",
+                t.m_squared,
+                t.azimuthal_mode,
+                kernel_kind_label(t.kernel_kind),
+                t.verdict
+            ));
+            if let (Some(r512), Some(r1024), Some(d), Some(e)) = (
+                t.rho_at_512,
+                t.rho_at_1024,
+                t.delta_rho_512_to_1024,
+                t.rho_infty_extrapolation,
+            ) {
+                s.push_str(&format!(
+                    "    ρ(512)={r512:.6e}  ρ(1024)={r1024:.6e}  Δρ={d:.3e}  ρ_∞~{e:.6e}\n"
+                ));
+            }
+        }
+    }
+
+    if n_rupture == 0 {
+        s.push_str(
+            "\nNo ρ≥1 on this grid: either the physical proxy remains contractive,\n\
+             or the critical surface lies outside the probed (N,m²,ν,kernel) domain.\n",
+        );
+    } else {
+        s.push_str(
+            "\nCritical surface detected: unnormalized M_N loses contractivity on ≥1 sample.\n\
+             RowSumBenchmark would have hidden these ruptures by construction.\n",
+        );
+    }
+    s
+}
+
+/// Structured Markdown report for Path-3 high-resolution / Coulomb sweeps.
+pub fn format_path3_continuum_report_markdown(
+    yukawa_nu0: &[UnnormalizedSpectralSample],
+    exponential_nu0: &[UnnormalizedSpectralSample],
+) -> String {
+    let mut md = String::from(
+        "# Path-3 continuum stress report\n\n\
+         Unnormalized discrete monodromy `K̃` (`RenormPolicy::None`).\n\n\
+         - Profile: `ExplicitProfileParams::prd_reference()`, `r_loop = 1.5 r0`\n\
+         - Grids: `N ∈ {32,64,128,256,512,1024}`, `m² ∈ {1, 1e-2, 1e-4, 1e-8, 1e-12, 0}`\n\
+         - Azimuthal mode: `ν = 0` (no mode mass gap)\n\
+         - Kernels: `YukawaProxy` vs `ExponentialDecay` (Coulomb / log probe)\n\n",
+    );
+
+    md.push_str("## 1. ExponentialDecay, ν = 0 (Coulomb / logarithmic regime)\n\n");
+    md.push_str("```\n");
+    md.push_str(&format_unnormalized_spectral_sweep(exponential_nu0));
+    md.push_str("```\n\n");
+
+    md.push_str("## 2. YukawaProxy, ν = 0 (prefactor ∝ m_* → 0)\n\n");
+    md.push_str("```\n");
+    md.push_str(&format_unnormalized_spectral_sweep(yukawa_nu0));
+    md.push_str("```\n\n");
+
+    md.push_str("## 3. Limit behavior at N = 1024\n\n");
+    md.push_str("| kernel | m² | ρ(512) | ρ(1024) | Δρ | ρ_∞ (extrapolated) | row_sum(1024) | verdict |\n");
+    md.push_str("|---|---:|---:|---:|---:|---:|---:|---|\n");
+    let mut all = exponential_nu0.to_vec();
+    all.extend_from_slice(yukawa_nu0);
+    for t in continuum_limit_traces(&all) {
+        md.push_str(&format!(
+            "| {} | {:.1e} | {} | {} | {} | {} | {} | {} |\n",
+            kernel_kind_label(t.kernel_kind),
+            t.m_squared,
+            opt_f(t.rho_at_512),
+            opt_f(t.rho_at_1024),
+            opt_f(t.delta_rho_512_to_1024),
+            opt_f(t.rho_infty_extrapolation),
+            opt_f(t.mean_row_sum_at_1024),
+            t.verdict.replace('|', "/"),
+        ));
+    }
+    md.push('\n');
+
+    md.push_str("## 4. CSV (machine-readable)\n\n");
+    md.push_str("```csv\n");
+    md.push_str("kernel,nu,m_squared,N,rho,mean_row_sum,contractive\n");
+    for s in exponential_nu0.iter().chain(yukawa_nu0.iter()) {
+        md.push_str(&format!(
+            "{},{},{:.16e},{},{:.16e},{:.16e},{}\n",
+            kernel_kind_label(s.kernel_kind),
+            s.azimuthal_mode,
+            s.m_squared,
+            s.n_nodes,
+            s.rho,
+            s.mean_row_sum,
+            s.contractive
+        ));
+    }
+    md.push_str("```\n");
+    md
+}
+
+fn opt_f(x: Option<f64>) -> String {
+    match x {
+        Some(v) => format!("{v:.6e}"),
+        None => "—".to_string(),
+    }
+}
+
+/// Write the Path-3 Markdown report to `path` (creates parent dirs as needed).
+pub fn write_path3_continuum_report(
+    path: impl AsRef<std::path::Path>,
+    yukawa_nu0: &[UnnormalizedSpectralSample],
+    exponential_nu0: &[UnnormalizedSpectralSample],
+) -> std::io::Result<std::path::PathBuf> {
+    let path = path.as_ref();
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    let md = format_path3_continuum_report_markdown(yukawa_nu0, exponential_nu0);
+    std::fs::write(path, md)?;
+    Ok(path.to_path_buf())
+}
+
+/// Run the extended Path-3 campaign and persist `docs/path3_continuum_report.md`.
+pub fn run_path3_extended_campaign(
+    report_path: impl AsRef<std::path::Path>,
+) -> std::io::Result<(Vec<UnnormalizedSpectralSample>, Vec<UnnormalizedSpectralSample>, std::path::PathBuf)>
+{
+    let expo = sweep_unnormalized_spectral_radius_with(path3_coulomb_sweep_config());
+    let yukawa = sweep_unnormalized_spectral_radius_with(path3_yukawa_nu0_sweep_config());
+    let path = write_path3_continuum_report(report_path, &yukawa, &expo)?;
+    Ok((yukawa, expo, path))
 }
 
 /// Unit-amplitude sinusoidal forcing on \(N\) nodes (default inhomogeneous workload).
@@ -608,5 +1064,80 @@ mod tests {
             out_vals.iter().map(|v| v * v).sum::<f64>()
                 <= rho * rho * init.values.iter().map(|v| v * v).sum::<f64>() + 1e-8
         );
+    }
+
+    #[test]
+    fn renorm_policy_none_skips_row_sum_fix() {
+        let mut m = default_monodromy_operator();
+        m.n_nodes = 32;
+        m.renorm = RenormPolicy::RowSumBenchmark;
+        let k_bench = m.build_kernel_matrix();
+        let g_pp = {
+            let (g, _) = crate::algebra::metric_numeric::metric_at(
+                m.r_loop,
+                std::f64::consts::FRAC_PI_2,
+                &m.params,
+            );
+            g[3][3]
+        };
+        let dphi = 2.0 * std::f64::consts::PI / m.n_nodes as f64;
+        let delta_tau = (g_pp * dphi * dphi).sqrt();
+        let expected_row = (-m.m_star() * delta_tau).exp();
+        for row in &k_bench {
+            let sum: f64 = row.iter().sum();
+            assert!((sum - expected_row).abs() < 1e-10, "row sum {sum} vs {expected_row}");
+        }
+
+        m.renorm = RenormPolicy::None;
+        let k_phys = m.build_kernel_matrix();
+        let k_raw = m.build_raw_kernel_matrix();
+        for i in 0..m.n_nodes {
+            for j in 0..m.n_nodes {
+                assert!((k_phys[i][j] - k_raw[i][j]).abs() < 1e-15);
+            }
+        }
+        // Physical kernel must differ from the forced row-sum benchmark (artifact removal).
+        let mut max_diff: f64 = 0.0;
+        for i in 0..m.n_nodes {
+            for j in 0..m.n_nodes {
+                max_diff = max_diff.max((k_phys[i][j] - k_bench[i][j]).abs());
+            }
+        }
+        assert!(max_diff > 1e-6, "expected physical vs benchmark kernels to differ");
+    }
+
+    #[test]
+    fn path3_unnormalized_spectral_sweep_reports_contractivity() {
+        let samples =
+            sweep_unnormalized_spectral_radius(&path3_default_n_grid(), &path3_default_m2_grid());
+        assert_eq!(samples.len(), 4 * 3);
+        let report = format_unnormalized_spectral_sweep(&samples);
+        println!("\n{report}");
+
+        // Benchmark policy must remain contractive on the same (N, m²) corners.
+        for sample in &samples {
+            let mut m = default_monodromy_operator();
+            m.n_nodes = sample.n_nodes;
+            m.m_squared = sample.m_squared;
+            m.renorm = RenormPolicy::RowSumBenchmark;
+            assert!(
+                m.spectral_radius() < 1.0,
+                "RowSumBenchmark unexpectedly non-contractive at N={}, m²={}",
+                sample.n_nodes,
+                sample.m_squared
+            );
+        }
+
+        // Sanity: ρ is finite and nonnegative; document ruptures without forcing them.
+        for sample in &samples {
+            assert!(sample.rho.is_finite() && sample.rho >= 0.0);
+            assert_eq!(sample.contractive, sample.rho < 1.0);
+            if sample.ruptured() {
+                println!(
+                    "RUPTURE: N={}, m²={:.1e}, ρ={:.6e}",
+                    sample.n_nodes, sample.m_squared, sample.rho
+                );
+            }
+        }
     }
 }

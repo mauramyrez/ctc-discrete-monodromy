@@ -3,8 +3,10 @@
 use ctc_research_framework::algebra::invariants;
 use ctc_research_framework::algebra::metric_profiles::ExplicitProfileParams;
 use ctc_research_framework::dynamics::monodromy::{
-    default_forcing_vector, default_monodromy_operator, find_fixed_point,
-    find_fixed_point_inhomogeneous, KernelKind, PeriodicField,
+    continuum_limit_traces, default_forcing_vector, default_monodromy_operator, find_fixed_point,
+    find_fixed_point_inhomogeneous, format_unnormalized_spectral_sweep, path3_default_m2_grid,
+    path3_default_n_grid, run_path3_extended_campaign, sweep_unnormalized_spectral_radius,
+    KernelKind, PeriodicField,
 };
 use ctc_research_framework::dynamics::{bvp, monodromy};
 use ctc_research_framework::energy::conditions;
@@ -85,6 +87,32 @@ fn main() -> Result<()> {
     let wec = conditions::weak_energy_condition_sample()?;
     println!("[energy] API scaffold NEC sample ≥ 0: {}", nec);
     println!("[energy] API scaffold WEC sample ≥ 0: {}", wec);
+
+    println!();
+    let path3 = sweep_unnormalized_spectral_radius(
+        &path3_default_n_grid(),
+        &path3_default_m2_grid(),
+    );
+    print!("{}", format_unnormalized_spectral_sweep(&path3));
+
+    println!();
+    println!("[path3] Extended continuum campaign (N≤1024, m²→0, ν=0) …");
+    let report_path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("docs")
+        .join("path3_continuum_report.md");
+    let (_yukawa, expo, path) = run_path3_extended_campaign(&report_path)?;
+    print!("{}", format_unnormalized_spectral_sweep(&expo));
+    for t in continuum_limit_traces(&expo) {
+        println!(
+            "[path3-limit] m²={:.1e}  ρ(1024)={}  {}",
+            t.m_squared,
+            t.rho_at_1024
+                .map(|r| format!("{r:.6e}"))
+                .unwrap_or_else(|| "—".into()),
+            t.verdict
+        );
+    }
+    println!("[path3] Structured report: {}", path.display());
 
     Ok(())
 }

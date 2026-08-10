@@ -15,7 +15,7 @@ Thumbs.db
 .cursorrules
 .cursor/
 
-# LaTeX auxiliaries
+# LaTeX auxiliaries (keep paper-cqg.pdf for the journal companion)
 docs/*.aux
 docs/*.bbl
 docs/*.blg
@@ -26,14 +26,7 @@ docs/*.fls
 docs/*.fdb_latexmk
 docs/*.synctex.gz
 docs/*.spl
-docs/paper.pdf
-
-# Local template fetches / legacy journal materials (do not publish)
-docs/_fetch/
-docs/iopjournal.cls
-docs/softwarex-software-update-template.tex
-docs/orcid.pdf
-examples/
+docs/*.Notes.bib
 
 # Keep vector figures; ignore accidental rasters if huge
 docs/figures/*.png

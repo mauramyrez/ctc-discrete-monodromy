@@ -1,33 +1,48 @@
-# ctc-discrete-monodromy
+# Supplementary numerical material (Classical and Quantum Gravity)
 
-A high-performance Rust framework for discrete operator diagnostics, symbolic metric export, and spectral stability analysis on axisymmetric background profiles.
+Reproducible companion code and data for the CQG manuscript
 
-Open-source companion to the SoftwareX **Original Software Publication** (OSP) for **ctc-discrete-monodromy** v0.1.0.
+**Discrete Spacelike Monodromy Proxy and Infrared Spectral Transition on Axisymmetric Frame-Dragging Backgrounds**
 
-**What is reusable beyond the demo geometry?** The core product is a typed circulant-kernel / Picard harness (`DiscreteMonodromyOperator`, modular `KernelKind`, homogeneous and inhomogeneous maps `Φ = KΦ + S`, spectral-radius / Lipschitz oracles, RK4 geodesic checks). The Morris–Thorne frame-dragging profile is the reference application, not a continuum field claim.
-
-**Naming note:** the historical `ctc-` package prefix is retained for repository continuity and does **not** assert closed-timelike-curve physics.
+This repository is **not** a standalone software product. It archives the discrete monodromy diagnostics, symbolic tensor expansions, and spectral tables that support the theoretical claims of the paper—chiefly criterion **(C3)**: the mass-gap / massless spectral rupture of the unnormalized proxy \(\widetilde{K}\) on a spacelike azimuthal loop (Sec.&nbsp;IV).
 
 | Item | Value |
 |------|--------|
+| Manuscript | [`docs/paper-cqg.tex`](docs/paper-cqg.tex) / [`docs/paper-cqg.pdf`](docs/paper-cqg.pdf) (IOP `iopjournal` + `iopart-num`; CQG) |
+| Spectral tables (Path-3) | [`docs/path3_continuum_report.md`](docs/path3_continuum_report.md) |
 | Crate / binary | `ctc-research-framework` / `ctc-engine` |
 | Version | 0.1.0 (git tag `v0.1.0`) |
 | License | MIT (`LICENSE` / `LICENSE.txt`) |
 | Languages | Rust 2021 + optional Python 3 (SymPy, NumPy, SciPy, Matplotlib) |
-| OS | Windows 10+, Linux, macOS |
 | Repository | https://github.com/mauramyrez/ctc-discrete-monodromy |
-| Support | 1912574a@umich.mx |
+| Contact | 1912574a@umich.mx |
 
-## Intended users (SoftwareX scope)
+**Naming note.** The historical `ctc-` package prefix is retained for repository continuity and does **not** by itself assert continuum closed-timelike-curve field theorems. All certified numerical claims refer to the discrete operators \(K\) and \(\widetilde{K}\) constructed in the manuscript.
 
-- Numerical analysts needing a forkable regression oracle for row-normalized dense periodic kernels
-- Research software engineers who want dimension-safe Picard / spectral gates in CI
-- Computational-relativity practitioners sampling explicit axisymmetric profiles
-- Instructors regenerating optional illustration PDFs without coupling Python to the Rust acceptance gate
+## Scope (aligned with the paper)
 
-**Scope:** discrete operator diagnostics on explicit metric profiles—not continuum field theorems. Certified numerical claims refer to the row-normalized kernel \(K\) on \(\mathbb{R}^N\) and residuals of \(\Phi = K\Phi + S\).
+- Evaluates a **discrete monodromy proxy** on a fixed-\((r,\theta)\) azimuthal loop: spectral radii, contraction diagnostics, and Picard fixed points.
+- Does **not** solve a fully dynamical Klein–Gordon field on the curved background, evolve the Einstein equations, or reconstruct a continuum Green function.
+- Row-sum renormalization of \(K\) is an algebraic control (\(\rho(K)<1\) by construction). The physical infrared diagnostic is the **unnormalized** proxy \(\widetilde{K}\) under \(m^{2}\to 0\) at \(\nu=0\).
+- Semiclassical Hadamard / EFT bounds in the manuscript (criterion C4) are an analytic outlook and are **not** numerical outputs of this code.
 
-## Quick start (acceptance gate)
+Reference profile (matches `ExplicitProfileParams::prd_reference()` and Eq.&nbsp;(3) of the paper):
+
+\[
+(r_0,\gamma,\alpha,\omega_0,\beta)=(1.0,\ 0.5,\ 0.1,\ 1.2,\ 2.0),\qquad r_{\mathrm{loop}}=1.5\,r_0.
+\]
+
+## Data and code access
+
+The discrete-monodromy source code and full spectral tables accompanying this work are available at https://github.com/mauramyrez/ctc-discrete-monodromy; the Path-3 continuum campaign report is archived as `docs/path3_continuum_report.md` in that repository.
+
+Regenerate the Path-3 sweep (unnormalized \(\widetilde{K}\), \(\nu=0\), \(N\le 1024\)):
+
+```bash
+cargo test --release path3_extended -- --nocapture
+```
+
+## Reproduce the numerical gates
 
 ```bash
 git clone https://github.com/mauramyrez/ctc-discrete-monodromy.git
@@ -41,70 +56,75 @@ cargo run --release --bin ctc-engine
 cargo test
 ```
 
-Expected: **17/17** unit tests passed.
+Expected: **17/17** unit tests passed (geometry / energy-scaffold checks, renormalized contraction, inhomogeneous Picard residuals, modular kernels, RK4 geodesics).
 
-## Capabilities
-
-| Capability | What the crate provides |
-|------------|-------------------------|
-| Metric profiles | Explicit \(\{b(r),\Phi(r),\omega(r)\}\), flare-out, equatorial ergoregion / ergosurface locus |
-| Discrete monodromy \(\mathcal{M}_N\) | Row-sum renormalized kernel \(K\), spectral-radius / grid-oscillation diagnostics |
-| Inhomogeneous workload | Forcing vector \(S\) with Picard map \(\Phi\mapsto K\Phi+S\) (nontrivial response) |
-| Modular kernels | `KernelKind::{YukawaProxy, ExponentialDecay}` comparative spectral baselines |
-| Geodesics | RK4 co-rotating equatorial integrator regression |
-| Optional SymPy export | Static equatorial \(G_{\mu\nu}\) / NEC–WEC documentation assets |
-| Optional figures | Matplotlib scripts that regenerate SoftwareX illustration PDFs |
-
-### Discrete operator definition
-
-\[
-K_{ij}
-=
-\widetilde{K}_{ij}\,
-\frac{\mathrm{e}^{-m_*\Delta\tau}}{\sum_k \widetilde{K}_{ik}}
-\]
-
-Row-sum renormalization is an explicit benchmarking step and forces \(\rho(K)<1\) by construction. Homogeneous runs (\(S=0\)) converge to \(\Phi^*=0\); nonzero \(S\) yields a nontrivial discrete response. Tests enforce `field.len() == n_nodes` (no silent truncation).
-
-## Repository layout
-
-The GitHub repository root **is** the Cargo package root:
-
-```
-.
-├── Cargo.toml                 # ctc-research-framework + [[bin]] ctc-engine
-├── LICENSE / LICENSE.txt      # MIT (SoftwareX-required license file)
-├── README.md
-├── requirements.txt           # optional Python pins
-├── docs/
-│   ├── paper.tex              # SoftwareX OSP manuscript (submit this)
-│   ├── softwarex-osp-template.tex
-│   ├── README.md              # manuscript / template guidance
-│   └── figures/               # optional illustration PDFs
-├── scripts/                   # optional SymPy + Matplotlib helpers
-└── src/
-    ├── lib.rs
-    ├── main.rs                # ctc-engine CLI
-    ├── algebra/
-    ├── dynamics/
-    │   ├── monodromy.rs       # core discrete-operator engine
-    │   ├── geodesic.rs
-    │   └── bvp.rs
-    ├── energy/
-    └── tests/monodromy_test.rs
-```
-
-## Build options
-
-Optional MPFR feature (needs system GMP/MPFR):
+Optional high-precision build (system GMP/MPFR required):
 
 ```bash
 cargo build --release --features high-prec
 ```
 
-### Optional Python layer (symbolic export + figures)
+## Compile the manuscript
 
-Not required to compile or test the Rust engine. Useful for regenerating documentation tensors and SoftwareX illustration figures:
+From `docs/` (requires MiKTeX / TeX Live; uses local `iopjournal.cls`):
+
+```bash
+pdflatex paper-cqg
+bibtex paper-cqg
+pdflatex paper-cqg
+pdflatex paper-cqg
+```
+
+See [`docs/README.md`](docs/README.md) for the file map (appendices, figures, Path-3 report).
+
+## What the code implements
+
+| Capability | Role relative to the paper |
+|------------|----------------------------|
+| Explicit profiles \(\{b(r),\Phi(r),\omega(r)\}\) | Geometry / ergoregion locus (C1) |
+| Symbolic equatorial \(G_{\mu\nu}\) / NEC–WEC export | Static background constraints (C2) |
+| Row-sum renormalized monodromy \(K\) | Algebraic Banach–Picard gate (C3 control) |
+| Unnormalized proxy \(\widetilde{K}\) (Yukawa vs exponential) | Mass-gap threshold / IR rupture (C3 core) |
+| RK4 co-rotating geodesics | Supporting geometric diagnostics |
+| Optional Matplotlib figures | Illustration PDFs under `docs/figures/` |
+
+Discrete operator (row-sum renormalized control gate):
+
+\[
+K_{ij}
+=
+\widetilde{K}_{ij}\,
+\frac{\mathrm{e}^{-m_*\Delta\tau}}{\sum_k \widetilde{K}_{ik}}.
+\]
+
+## Repository layout
+
+```
+.
+├── Cargo.toml                 # ctc-research-framework + [[bin]] ctc-engine
+├── LICENSE / LICENSE.txt
+├── README.md                  # this file (CQG supplementary material)
+├── requirements.txt           # optional Python pins
+├── docs/
+│   ├── paper-cqg.tex / .pdf   # CQG manuscript (iopjournal + iopart-num)
+│   ├── iopjournal.cls         # IOP submission class
+│   ├── iopart-num.bst
+│   ├── references.bib
+│   ├── path3_continuum_report.md
+│   ├── figures/               # lightcones, geodesic loop, …
+│   └── README.md
+├── scripts/                   # optional SymPy + Matplotlib helpers
+└── src/
+    ├── lib.rs
+    ├── main.rs
+    ├── dynamics/monodromy.rs  # discrete-operator engine
+    └── tests/monodromy_test.rs
+```
+
+
+### Optional Python layer
+
+Not required to compile or test the Rust engine. Useful for regenerating symbolic tensors and figure PDFs:
 
 ```bash
 python -m venv .venv
@@ -116,59 +136,11 @@ python scripts/verify_energy_conditions.py
 python scripts/plot_spacetime_diagrams.py
 ```
 
-Reference profile (matches `ExplicitProfileParams::prd_reference()`):
+## Citation
 
-\[
-(r_0,\gamma,\alpha,\omega_0,\beta)=(1.0,\ 0.5,\ 0.1,\ 1.2,\ 2.0)
-\]
-
-## Regression suite (17/17)
-
-```bash
-cargo test
-# verbose monodromy output:
-cargo test -- --nocapture monodromy
-```
-
-Coverage:
-
-1. Metric / flare-out / ergosurface diagnostics  
-2. Energy-scaffold API checks  
-3. Monodromy bounds \(\rho(K)<1\) and oscillation Lipschitz \(L<1\)  
-4. Homogeneous Picard residuals \(<10^{-8}\) for \(N\in\{32,64,128\}\)  
-5. Inhomogeneous forcing \(\Phi=K\Phi+S\) with nontrivial \(\|\Phi^*\|_2\)  
-6. Modular kernel spectral comparison  
-7. RK4 co-rotating geodesic integration  
-
-## Minimal API example
-
-```rust
-use ctc_research_framework::dynamics::monodromy::{
-    default_forcing_vector, default_monodromy_operator,
-    find_fixed_point, find_fixed_point_inhomogeneous, PeriodicField,
-};
-
-let m = default_monodromy_operator(); // N=128, m^2=1, nu=1
-assert!(m.is_contraction());
-
-let init = PeriodicField::new((0..m.n_nodes).map(|i| 1.0 + 0.1 * (i as f64)).collect());
-let fp0 = find_fixed_point(&init, &m)?;
-assert!(fp0.field.l2_norm() < 1e-6);
-
-let source = default_forcing_vector(m.n_nodes);
-let zero = PeriodicField::new(vec![0.0; m.n_nodes]);
-let fp = find_fixed_point_inhomogeneous(&zero, &m, &source)?;
-assert!(fp.field.l2_norm() > 1e-3);
-assert!(fp.residual < 1e-8);
-```
-
-## Citation / manuscript
-
-- Manuscript source: [`docs/paper.tex`](docs/paper.tex) (Elsevier `elsarticle` OSP).  
-- Do **not** submit the software-update template; this is a first Original Software Publication.  
-- See [`docs/README.md`](docs/README.md) for template guidance.
+Please cite the Classical and Quantum Gravity manuscript (`docs/paper-cqg.tex`). For the numerical companion, point readers to this repository and to `docs/path3_continuum_report.md`.
 
 ## License
 
 MIT. Copyright (c) 2026 Mauricio M. Paniagua.  
-Support: 1912574a@umich.mx
+Contact: 1912574a@umich.mx

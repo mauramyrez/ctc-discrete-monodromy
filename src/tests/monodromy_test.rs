@@ -4,11 +4,14 @@
 //! discrete kernel \(K\) on \(\mathbb{R}^N\) with `field.len() == n_nodes` enforced.
 //! Homogeneous Picard (\(S=0\)) converges to \(\Phi^*\approx 0\); inhomogeneous
 //! forcing yields a nontrivial discrete response vector.
+//! Path-3 tests probe the **unnormalized** proxy \(\widetilde{K}\).
 
 use crate::dynamics::monodromy::{
-    alternate_initial_data_picard_test, banach_verification, default_forcing_vector,
-    default_monodromy_operator, find_fixed_point, find_fixed_point_inhomogeneous,
-    homogeneous_picard_baseline_test, PeriodicField,
+    alternate_initial_data_picard_test, banach_verification, continuum_limit_traces,
+    default_forcing_vector, default_monodromy_operator, find_fixed_point,
+    find_fixed_point_inhomogeneous, format_unnormalized_spectral_sweep,
+    homogeneous_picard_baseline_test, KernelKind, path3_default_m2_grid, path3_default_n_grid,
+    run_path3_extended_campaign, sweep_unnormalized_spectral_radius, PeriodicField, RenormPolicy,
 };
 
 #[test]
@@ -79,4 +82,70 @@ fn discrete_monodromy_spectral_radius_below_unity() {
     let fp = find_fixed_point_inhomogeneous(&init, &m, &source).unwrap();
     assert!(fp.residual < 1e-10);
     assert!(fp.field.l2_norm() > 1e-3);
+}
+
+/// Legacy Path-3 grid (fast). Run with: `cargo test path3_unnormalized -- --nocapture`
+#[test]
+fn path3_unnormalized_mass_and_n_sweep() {
+    let samples =
+        sweep_unnormalized_spectral_radius(&path3_default_n_grid(), &path3_default_m2_grid());
+    println!("\n{}", format_unnormalized_spectral_sweep(&samples));
+    assert_eq!(samples.len(), 12);
+    assert_eq!(
+        default_monodromy_operator().renorm,
+        RenormPolicy::RowSumBenchmark
+    );
+}
+
+/// Extended Path-3: \(N\le 1024\), \(m^2\to 0\), \(\nu=0\); writes `docs/path3_continuum_report.md`.
+///
+/// Run with: `cargo test path3_extended -- --nocapture`
+#[test]
+fn path3_extended_highn_ultralow_mass_report() {
+    let report_path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("docs")
+        .join("path3_continuum_report.md");
+    let (yukawa, expo, path) =
+        run_path3_extended_campaign(&report_path).expect("Path-3 report write");
+    assert_eq!(yukawa.len(), 36);
+    assert_eq!(expo.len(), 36);
+    assert!(path.is_file());
+
+    println!("\n=== ExponentialDecay ν=0 (Coulomb/log) ===");
+    println!("{}", format_unnormalized_spectral_sweep(&expo));
+    println!("\n=== YukawaProxy ν=0 ===");
+    println!("{}", format_unnormalized_spectral_sweep(&yukawa));
+
+    for t in continuum_limit_traces(&expo)
+        .into_iter()
+        .chain(continuum_limit_traces(&yukawa))
+    {
+        println!(
+            "N=1024 limit | {} | m²={:.1e} | ρ(1024)={} | {}",
+            match t.kernel_kind {
+                KernelKind::YukawaProxy => "Yukawa",
+                KernelKind::ExponentialDecay => "ExpDecay",
+            },
+            t.m_squared,
+            t.rho_at_1024
+                .map(|r| format!("{r:.6e}"))
+                .unwrap_or_else(|| "—".into()),
+            t.verdict
+        );
+        assert!(t.rho_at_1024.is_some(), "missing ρ(1024)");
+    }
+
+    // Massless exponential ν=0: ρ → (N-1)Δτ → 2π√g_φφ ≳ 1 (true Coulomb rupture).
+    assert!(expo
+        .iter()
+        .filter(|s| s.m_squared == 0.0)
+        .all(|s| s.ruptured()));
+
+    // Yukawa ∝ m_* collapses as m→0 at ν=0.
+    assert!(yukawa
+        .iter()
+        .filter(|s| s.m_squared == 0.0)
+        .all(|s| s.contractive && s.rho < 1e-12));
+
+    println!("Report: {}", path.display());
 }

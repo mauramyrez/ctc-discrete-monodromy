@@ -1,5 +1,59 @@
-% BibTeX references — scientific software, discrete operators, and metric-profile backgrounds
-% Keys must match \cite{...} in paper.tex
+% BibTeX references for the CQG manuscript (paper-cqg.tex + inputs).
+% Citation keys must match \cite{...} exactly (numeric IOP / iopart-num).
+
+%------------------------------------------------------------------------------
+% Core wormhole / chronology / frame-dragging literature
+%------------------------------------------------------------------------------
+
+@article{Hawking1992,
+  author  = {Hawking, S. W.},
+  title   = {Chronology protection conjecture},
+  journal = {Phys. Rev. D},
+  volume  = {46},
+  pages   = {603--611},
+  year    = {1992},
+  doi     = {10.1103/PhysRevD.46.603}
+}
+
+@article{Novikov1989,
+  author  = {Novikov, I. D.},
+  title   = {An analysis of the operation of a time machine},
+  journal = {Zh. Eksp. Teor. Fiz.},
+  volume  = {95},
+  pages   = {769--776},
+  year    = {1989},
+  note    = {[Sov. Phys. JETP {\textbf{68}}, 439 (1989)]}
+}
+
+@article{Friedman1990,
+  author  = {Friedman, John and Morris, Michael S. and Novikov, Igor D. and Echeverria, Fernando and Klinkhammer, Gunnar and Thorne, Kip S. and Yurtsever, Ulvi},
+  title   = {Cauchy problem in spacetimes with closed timelike curves},
+  journal = {Phys. Rev. D},
+  volume  = {42},
+  pages   = {1915--1930},
+  year    = {1990},
+  doi     = {10.1103/PhysRevD.42.1915}
+}
+
+@article{KimThorne1991,
+  author  = {Kim, Sung-Won and Thorne, Kip S.},
+  title   = {Do vacuum fluctuations prevent the creation of closed timelike curves?},
+  journal = {Phys. Rev. D},
+  volume  = {43},
+  pages   = {3929--3947},
+  year    = {1991},
+  doi     = {10.1103/PhysRevD.43.3929}
+}
+
+@article{KayRadzikowskiWald1997,
+  author  = {Kay, Bernard S. and Radzikowski, Marek J. and Wald, Robert M.},
+  title   = {Quantum field theory on spacetimes with a compactly generated {C}auchy horizon},
+  journal = {Commun. Math. Phys.},
+  volume  = {183},
+  pages   = {533--556},
+  year    = {1997},
+  doi     = {10.1007/s002200050042}
+}
 
 @article{Morris1988,
   author  = {Morris, Michael S. and Thorne, Kip S.},
@@ -13,10 +67,20 @@
 
 @book{Visser1995,
   author    = {Visser, Matt},
-  title     = {Lorentzian Wormholes: From Einstein to Hawking},
+  title     = {Lorentzian Wormholes: From {E}instein to {H}awking},
   publisher = {AIP Press},
   year      = {1995},
   address   = {New York}
+}
+
+@article{Teo1998,
+  author  = {Teo, Edward},
+  title   = {Rotating traversable wormholes},
+  journal = {Phys. Rev. D},
+  volume  = {58},
+  pages   = {024014},
+  year    = {1998},
+  doi     = {10.1103/PhysRevD.58.024014}
 }
 
 @book{HawkingEllis1973,
@@ -26,6 +90,43 @@
   year      = {1973},
   address   = {Cambridge}
 }
+
+%------------------------------------------------------------------------------
+% QFT in curved spacetime / EFT (Hadamard outlook, Sec. V / C4)
+%------------------------------------------------------------------------------
+
+@book{BirrellDavies1982,
+  author    = {Birrell, N. D. and Davies, P. C. W.},
+  title     = {Quantum Fields in Curved Space},
+  publisher = {Cambridge University Press},
+  year      = {1982},
+  address   = {Cambridge},
+  doi       = {10.1017/CBO9780511622632}
+}
+
+@article{DeWitt1975,
+  author  = {DeWitt, Bryce S.},
+  title   = {Quantum field theory in curved spacetime},
+  journal = {Phys. Rep.},
+  volume  = {19},
+  pages   = {295--357},
+  year    = {1975},
+  doi     = {10.1016/0370-1573(75)90051-4}
+}
+
+@article{Sotiriou2010,
+  author  = {Sotiriou, Thomas P. and Faraoni, Valerio},
+  title   = {{$f(R)$} theories of gravity},
+  journal = {Rev. Mod. Phys.},
+  volume  = {82},
+  pages   = {451--497},
+  year    = {2010},
+  doi     = {10.1103/RevModPhys.82.451}
+}
+
+%------------------------------------------------------------------------------
+% Companion software / optional tooling (retained for SoftwareX archive drafts)
+%------------------------------------------------------------------------------
 
 @article{Meurer2017,
   author  = {Meurer, Aaron and Smith, Christopher P. and Paprocki, Mateusz and {\v{C}}ert{\'\i}k, Ond{\v{r}}ej and Kirpichev, Sergey B. and Rocklin, Matthew and Kumar, AMiT and Ivanov, Sergiu and Moore, Jason K. and Singh, Sartaj and Rathnayake, Thilina and Vig, Sean and Granger, Brian E. and Muller, Richard P. and Bonazzi, Francesco and Gupta, Harsh and Vats, Shivam and Johansson, Fredrik and Pedregosa, Fabian and Curry, Matthew J. and Terrel, Andy R. and Rou{\v{c}}ka, {\v{S}}t{\v{e}}p{\'a}n and Saboo, Ashutosh and Fernando, Isuru and Kulal, Sumith and Cimrman, Robert and Scopatz, Anthony},
@@ -98,6 +199,6 @@
   title        = {{ctc-discrete-monodromy}: a reproducible {R}ust/{S}ym{P}y framework for discrete operator diagnostics on axisymmetric ergoregion backgrounds},
   year         = {2026},
   howpublished = {GitHub repository},
-  note         = {MIT-licensed research software: Rust discrete monodromy / spectral--Picard regression harness, SymPy equatorial tensor exports, and SoftwareX manuscript sources. Available at \url{https://github.com/mauramyrez/ctc-discrete-monodromy}},
+  note         = {MIT-licensed research software. Available at \url{https://github.com/mauramyrez/ctc-discrete-monodromy}},
   url          = {https://github.com/mauramyrez/ctc-discrete-monodromy}
 }
