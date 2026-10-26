@@ -1,0 +1,523 @@
+% =============================================================================
+% FORMULARIO — Electrónica Analógica I — Capítulo 2
+% Teoría de Circuitos (Notas: José Aarón Padilla García, FIE-UMSNH)
+% Compilar: pdflatex (2 veces)
+% =============================================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-tabla,es-noshorthands]{babel}
+\usepackage{lmodern}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{caption}
+
+\usepackage{tikz}
+\usetikzlibrary{babel,arrows.meta,calc,positioning}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Formulario Cap.\ 2 --- Teoría de Circuitos}
+\fancyhead[R]{\small Electrónica Analógica I}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\titleformat{\section}{\Large\bfseries}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection.}{0.4em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries}{\thesubsubsection.}{0.35em}{}
+
+\hypersetup{colorlinks=false,pdfborder={0 0 0},
+  pdftitle={Formulario Cap. 2 --- Teoría de Circuitos},
+  pdfauthor={Basado en notas de José Aarón Padilla García}}
+
+\setlist[itemize]{leftmargin=1.2em,itemsep=2pt,topsep=3pt}
+\setlist[enumerate]{leftmargin=1.3em,itemsep=2pt,topsep=3pt}
+
+% Marco simple sin color
+\newcommand{\marco}[2]{%
+  \par\smallskip\noindent
+  \fbox{\begin{minipage}{0.96\linewidth}
+  \textbf{#1}\par\smallskip
+  #2
+  \end{minipage}}\par\smallskip
+}
+
+\begin{document}
+
+\begin{center}
+{\LARGE\bfseries Formulario --- Capítulo 2}\\[0.35em]
+{\Large Introducción a la Teoría de Circuitos}\\[0.5em]
+{\normalsize Electrónica Analógica I --- FIE, UMSNH}\\[0.2em]
+{\small Basado en las notas de José Aarón Padilla García}\\[0.6em]
+\rule{0.55\textwidth}{0.6pt}
+\end{center}
+
+\tableofcontents
+\vspace{0.8em}
+\rule{\textwidth}{0.4pt}
+
+% ############################################################################
+\section{Magnitudes básicas}
+
+\subsection{Carga, corriente, tensión y potencia}
+
+\begin{align}
+i &= \frac{\mathrm{d}q}{\mathrm{d}t} \tag{2.1}\\
+q &= \int_{t_0}^{t} i\,\mathrm{d}t \tag{2.2}\\
+V &= \frac{W}{Q} \tag{2.3}\\
+p &= vi \tag{2.4}
+\end{align}
+
+\begin{itemize}
+  \item Carga elemental: \(e = -1.602\times 10^{-19}\,\mathrm{C}\). Conservación: la carga no se crea ni se destruye.
+  \item \(1\,\mathrm{A}=1\,\mathrm{C/s}\). CD constante \(\to I\); CA variable \(\to i\).
+  \item Convención de corriente: sentido del movimiento de \textbf{carga positiva}.
+  \item \(1\,\mathrm{V}=1\,\mathrm{J/C}\). Puede haber tensión sin corriente.
+  \item Convención pasiva: si \(i\) entra por el terminal ``\(+\)'', entonces \(p=vi\) es potencia \textbf{absorbida}. Si \(p<0\), el elemento genera potencia.
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}[thick,font=\small]
+  \draw (0,0) rectangle (1.5,2.0);
+  \node at (0.75,1.0) {elemento};
+  \node at (1.75,2.0) {$+$};
+  \node at (1.75,0.0) {$-$};
+  \draw[<->] (2.1,0) -- (2.1,2.0) node[midway,right]{$v$};
+  \draw[-{Latex}] (-0.7,2.0) -- (-0.7,0.15) node[midway,left]{$i$};
+  \draw (-0.7,2.0) -- (0,2.0);
+  \draw (-0.7,0) -- (0,0);
+  \node[align=left] at (4.6,1.0) {$p=vi$\\[0.2em]($i$ entra por $+$)};
+\end{tikzpicture}
+\end{center}
+
+\subsection{Ley de Ohm y potencia en un resistor}
+
+\begin{align}
+v &= Ri \tag{2.14}\\
+p &= vi = i^{2}R = \frac{v^{2}}{R} \tag{2.15}
+\end{align}
+
+Conductancia: \(G=1/R\) (siemens, S). Un resistor siempre absorbe potencia (\(R>0\Rightarrow p>0\)).
+
+% ############################################################################
+\section{Comportamiento de corriente y voltaje: serie y paralelo}
+
+\marco{Regla fundamental}{%
+\textbf{Serie:} misma corriente; las tensiones se suman.\\
+\textbf{Paralelo:} misma tensión; las corrientes se suman.
+}
+
+\subsection{Elementos en serie}
+
+Dos o más elementos están en \textbf{serie} si comparten un solo nodo entre sí y por ellos circula la \textbf{misma corriente}.
+
+\begin{center}
+\begin{tikzpicture}[thick,font=\small]
+  % Fuente
+  \draw (0,0) -- (0,2.4);
+  \draw (0,1.5) circle (0.35);
+  \node at (0,1.5) {$v$};
+  \draw (0,2.4) -- (1.0,2.4);
+  % R1 zigzag
+  \draw (1.0,2.4) -- (1.3,2.4)
+    -- (1.5,2.65) -- (1.9,2.15) -- (2.3,2.65) -- (2.7,2.15) -- (3.1,2.65) -- (3.3,2.4) -- (3.6,2.4);
+  \node[above] at (2.3,2.7) {$R_1$};
+  \draw[<->] (1.3,3.15) -- (3.3,3.15) node[midway,above]{$v_1$};
+  % R2
+  \draw (3.6,2.4) -- (3.9,2.4)
+    -- (4.1,2.65) -- (4.5,2.15) -- (4.9,2.65) -- (5.3,2.15) -- (5.7,2.65) -- (5.9,2.4) -- (6.2,2.4);
+  \node[above] at (4.9,2.7) {$R_2$};
+  \draw[<->] (3.9,3.15) -- (5.9,3.15) node[midway,above]{$v_2$};
+  % cierre
+  \draw (6.2,2.4) -- (6.2,0) -- (0,0);
+  \draw[-{Latex}] (0.4,2.4) -- (0.9,2.4) node[midway,below]{$i$};
+\end{tikzpicture}
+\end{center}
+
+\begin{itemize}
+  \item Corriente: \(i = i_1 = i_2 = \cdots = i_N\) (una sola corriente).
+  \item Voltaje: \(v = v_1 + v_2 + \cdots + v_N\) (LVK).
+  \item Con Ohm: \(v = i(R_1+R_2+\cdots+R_N)\).
+\end{itemize}
+
+\subsection{Elementos en paralelo}
+
+Dos o más elementos están en \textbf{paralelo} si comparten el \textbf{mismo par de nodos} y, por tanto, la \textbf{misma tensión} en sus terminales.
+
+\begin{center}
+\begin{tikzpicture}[thick,font=\small]
+  \draw (0,0) -- (0,2.6);
+  \draw (0,1.3) circle (0.35);
+  \node at (0,1.3) {$v$};
+  \draw (0,2.6) -- (1.2,2.6) -- (1.2,2.2);
+  \draw (1.2,2.2) -- (1.4,2.2)
+    -- (1.6,2.45) -- (2.0,1.95) -- (2.4,2.45) -- (2.8,1.95) -- (3.0,2.2) -- (3.2,2.2);
+  \node[above] at (2.2,2.5) {$R_1$};
+  \draw (3.2,2.2) -- (3.2,2.6) -- (4.4,2.6) -- (4.4,0) -- (0,0);
+  \draw (1.2,2.6) -- (1.2,0.4) -- (1.4,0.4);
+  \draw (1.4,0.4) -- (1.6,0.65) -- (2.0,0.15) -- (2.4,0.65) -- (2.8,0.15) -- (3.0,0.4) -- (3.2,0.4);
+  \draw (3.2,0.4) -- (3.2,0);
+  \node[below] at (2.2,0.05) {$R_2$};
+  \draw[<->] (-0.7,0) -- (-0.7,2.6) node[midway,left]{$v$};
+  \draw[-{Latex}] (0.5,2.6) -- (1.0,2.6) node[midway,below]{$i$};
+  \draw[-{Latex}] (1.2,2.4) -- (1.2,2.25);
+  \node[left] at (1.05,2.0) {$i_1$};
+  \draw[-{Latex}] (1.2,0.9) -- (1.2,0.55);
+  \node[left] at (1.05,0.75) {$i_2$};
+\end{tikzpicture}
+\end{center}
+
+\begin{itemize}
+  \item Voltaje: \(v = v_1 = v_2 = \cdots = v_N\) (misma tensión).
+  \item Corriente: \(i = i_1 + i_2 + \cdots + i_N\) (LCK).
+  \item Con Ohm: \(i = v\bigl(1/R_1 + 1/R_2 + \cdots + 1/R_N\bigr)\).
+\end{itemize}
+
+\subsection{Resumen: \(v\) e \(i\) en serie y en paralelo}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.35}
+\begin{tabular}{@{}lll@{}}
+\toprule
+ & \textbf{Serie} & \textbf{Paralelo}\\
+\midrule
+Corriente \(i\) & Igual en todos: \(i_1=i_2=\cdots\) & Se reparte: \(i=i_1+i_2+\cdots\)\\
+Voltaje \(v\) & Se reparte: \(v=v_1+v_2+\cdots\) & Igual en todos: \(v_1=v_2=\cdots\)\\
+Resistencias & \(R_{\mathrm{eq}}=\sum R_k\) & \(1/R_{\mathrm{eq}}=\sum 1/R_k\)\\
+Capacitores & \(1/C_{\mathrm{eq}}=\sum 1/C_k\) & \(C_{\mathrm{eq}}=\sum C_k\)\\
+Impedancias & \(Z_{\mathrm{eq}}=\sum Z_k\) & \(1/Z_{\mathrm{eq}}=\sum 1/Z_k\)\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\marco{Cómo recordar el dual \(R\)--\(C\)}{%
+Capacitores en paralelo se suman como resistencias en serie.\\
+Capacitores en serie se combinan como resistencias en paralelo.
+}
+
+% ############################################################################
+\section{Resistencias equivalentes}
+
+\begin{align}
+R_{\mathrm{eq,\,serie}} &= R_1+R_2+\cdots+R_N\\
+\frac{1}{R_{\mathrm{eq,\,paralelo}}} &= \frac{1}{R_1}+\frac{1}{R_2}+\cdots+\frac{1}{R_N}\\
+R_1\|R_2 &= \frac{R_1 R_2}{R_1+R_2}\quad\text{(solo dos)}
+\end{align}
+
+\textbf{Método de reducción:} combinar de adentro hacia afuera (paralelos internos primero, luego series, etc.) hasta obtener una sola \(R_{\mathrm{eq}}\) vista desde la fuente o las terminales de interés.
+
+% ############################################################################
+\section{Capacitores}
+
+\begin{align}
+q &= Cv \tag{2.5}\\
+C &= \varepsilon\frac{A}{d} \tag{2.6}\\
+i &= C\frac{\mathrm{d}v}{\mathrm{d}t} \tag{2.7}\\
+v &= \frac{1}{C}\int_{t_0}^{t} i\,\mathrm{d}t + v(t_0) \tag{2.8--2.9}
+\end{align}
+
+Propiedades:
+\begin{enumerate}
+  \item En CD (\(v\) constante): \(i=0\) \(\Rightarrow\) circuito abierto.
+  \item \(v_C\) es continua: no cambia de golpe.
+  \item Ideal: no disipa; almacena y devuelve energía.
+\end{enumerate}
+
+\begin{align}
+C_{\mathrm{eq,\,paralelo}} &= C_1+C_2+\cdots+C_N \tag{2.10}\\
+\frac{1}{C_{\mathrm{eq,\,serie}}} &= \frac{1}{C_1}+\frac{1}{C_2}+\cdots+\frac{1}{C_N} \tag{2.11}
+\end{align}
+
+% ############################################################################
+\section{Impedancia}
+
+En el dominio fasorial:
+\begin{equation}
+Z_R=R,\qquad Z_L=j\omega L,\qquad Z_C=\frac{1}{j\omega C}=-j\frac{1}{\omega C}.
+\tag{2.12--2.13}
+\end{equation}
+
+\[
+Z=\frac{\mathbf{V}}{\mathbf{I}}=R+jX=|Z|\angle\theta.
+\]
+
+\begin{itemize}
+  \item \(X\): reactancia (ohms). Depende de la frecuencia.
+  \item Serie: \(Z_{\mathrm{eq}}=Z_1+Z_2+\cdots\) (misma regla que \(R\)).
+  \item Paralelo: \(1/Z_{\mathrm{eq}}=1/Z_1+1/Z_2+\cdots\).
+  \item \(Z\) no es un fasor; pertenece al dominio de la frecuencia.
+\end{itemize}
+
+% ############################################################################
+\section{Señales de CA (valores característicos)}
+
+\begin{align}
+v &= V_p\,\mathrm{sen}\,\theta \tag{2.16}\\
+T &= \frac{1}{f}\\
+V_{pp} &= 2V_p\\
+V_{\mathrm{rms}} &= 0.707\,V_p \tag{2.17}
+\end{align}
+
+\begin{center}
+\begin{tikzpicture}[domain=0:4*pi,samples=180,thick]
+  \draw[-{Latex}] (-0.2,0) -- (13.0,0) node[right]{$t$};
+  \draw[-{Latex}] (0,-2.2) -- (0,2.5) node[above]{$v$};
+  \draw[domain=0:4*pi,samples=180] plot ({\x},{1.9*sin(\x r)});
+  \draw[dashed] (0,1.9) -- ({pi/2},1.9);
+  \draw[<->] (-0.12,0) -- (-0.12,1.9) node[midway,left,font=\scriptsize]{$V_p$};
+  \draw[<->] (0,-2.45) -- ({2*pi},-2.45) node[midway,below,font=\scriptsize]{$T=1/f$};
+  \draw[dashed] ({2*pi},-1.9) -- ({2*pi+0.7},-1.9);
+  \draw[dashed] ({2*pi},1.9) -- ({2*pi+0.7},1.9);
+  \draw[<->] ({2*pi+0.6},-1.9) -- ({2*pi+0.6},1.9) node[midway,right,font=\scriptsize]{$V_{pp}$};
+\end{tikzpicture}
+\end{center}
+
+% ############################################################################
+\section{Fuentes}
+
+\begin{itemize}
+  \item \textbf{Tensión independiente:} \(v_s\) fija, no depende de la corriente.
+  \item \textbf{Corriente independiente:} \(i_s\) fija, no depende de la tensión.
+  \item \textbf{Dependientes (diamante):} controladas por una \(v_x\) o \(i_x\) en otro punto del circuito.
+  \item Fuentes = elementos \textbf{activos}. Resistores = \textbf{pasivos} (solo absorben).
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}[thick,font=\scriptsize]
+  \draw (0,0) circle (0.4); \node at (0,0) {$v_s$}; \node at (0,-0.85) {V indep.};
+  \draw (2.4,0) circle (0.4); \draw[-{Latex}] (2.4,-0.25) -- (2.4,0.25); \node at (2.4,-0.85) {I indep.};
+  \draw (4.8,0.5) -- (4.8,-0.5) -- (5.45,0) -- cycle;
+  \draw (4.8,0.5) -- (4.15,0) -- (4.8,-0.5); \node at (4.8,0) {$Kv_x$}; \node at (4.8,-0.85) {V dep.};
+  \draw (7.4,0.5) -- (7.4,-0.5) -- (8.05,0) -- cycle;
+  \draw (7.4,0.5) -- (6.75,0) -- (7.4,-0.5);
+  \draw[-{Latex}] (7.4,-0.22) -- (7.4,0.22); \node at (7.4,-0.85) {I dep.};
+\end{tikzpicture}
+\end{center}
+
+% ############################################################################
+\section{Leyes de Kirchhoff}
+
+\subsection{Vocabulario}
+\begin{itemize}
+  \item \textbf{Nodo:} conexión común de dos o más elementos.
+  \item \textbf{Rama:} un elemento con sus dos nodos.
+  \item \textbf{Trayectoria:} secuencia de ramas sin repetir nodo.
+  \item \textbf{Lazo:} trayectoria cerrada.
+\end{itemize}
+
+\subsection{LCK --- Ley de corrientes de Kirchhoff}
+\begin{equation}
+\sum_{n=1}^{N} i_n = 0 \tag{2.18--2.19}
+\end{equation}
+La suma algebraica de corrientes que entran a un nodo es cero
+(equivalente: \(\sum i_{\mathrm{entran}}=\sum i_{\mathrm{salen}}\)).
+
+\begin{center}
+\begin{tikzpicture}[thick,font=\small]
+  \fill (0,0) circle (0.07);
+  \draw[-{Latex}] (-2.0,1.1) -- (-0.12,0.08) node[midway,above left]{$i_A$};
+  \draw[-{Latex}] (-2.0,-1.1) -- (-0.12,-0.08) node[midway,below left]{$i_B$};
+  \draw[-{Latex}] (0.12,0.08) -- (2.0,1.1) node[midway,above right]{$i_C$};
+  \draw[-{Latex}] (0.12,-0.08) -- (2.0,-1.1) node[midway,below right]{$i_D$};
+  \node at (0,-1.7) {$i_A+i_B-i_C-i_D=0$};
+\end{tikzpicture}
+\end{center}
+
+\subsection{LVK --- Ley de voltajes de Kirchhoff}
+\begin{equation}
+\sum_{n=1}^{N} v_n = 0 \tag{2.20--2.21}
+\end{equation}
+La suma algebraica de tensiones alrededor de cualquier lazo es cero.
+
+\textbf{Método práctico:} recorrer el lazo en sentido horario; escribir \(+v\) al entrar por ``\(+\)'' y \(-v\) al entrar por ``\(-\)''.
+
+% ############################################################################
+\section{Divisor de tensión y divisor de corriente}
+
+\subsection{Divisor de tensión (resistencias en serie)}
+Misma \(i\); la tensión total se reparte proporcionalmente a cada \(R\):
+\begin{equation}
+v_k = v\cdot\frac{R_k}{R_1+R_2+\cdots+R_N} \tag{2.22}
+\end{equation}
+Para dos: \(\displaystyle v_1=v\frac{R_1}{R_1+R_2}\),\; \(\displaystyle v_2=v\frac{R_2}{R_1+R_2}\).
+
+\begin{center}
+\begin{tikzpicture}[thick,font=\small]
+  \draw (0,2.6) -- (0,2.2)
+    -- (0.0,2.2) -- (-0.25,1.9) -- (0.25,1.5) -- (-0.25,1.1) -- (0.0,0.8) -- (0,0.5);
+  \node[right] at (0.4,1.55) {$R_1$\;($v_1$)};
+  \draw (0,0.5) -- (0,0.3)
+    -- (-0.25,0.0) -- (0.25,-0.4) -- (-0.25,-0.8) -- (0.0,-1.1) -- (0,-1.4);
+  \node[right] at (0.4,-0.4) {$R_2$\;($v_2$)};
+  \draw (0,2.6) -- (-1.2,2.6) -- (-1.2,-1.4) -- (0,-1.4);
+  \draw[<->] (-1.55,-1.4) -- (-1.55,2.6) node[midway,left]{$v$};
+\end{tikzpicture}
+\end{center}
+
+\subsection{Divisor de corriente (resistencias en paralelo)}
+Misma \(v\); la corriente total se reparte de forma \textbf{inversa} a cada \(R\):
+\begin{align}
+i_2 &= i\frac{R_1}{R_1+R_2} \tag{2.23}\\
+i_1 &= i\frac{R_2}{R_1+R_2} \tag{2.24}\\
+i_k &= i\cdot\frac{1/R_k}{1/R_1+\cdots+1/R_N} \tag{2.25}
+\end{align}
+(La rama de menor resistencia lleva más corriente.)
+
+% ############################################################################
+\section{Métodos de análisis de circuitos}
+
+\subsection{Método 1 --- Reducción serie/paralelo + Ohm}
+\begin{enumerate}
+  \item Identificar grupos en serie (misma \(i\)) y en paralelo (misma \(v\)).
+  \item Sustituir por \(R_{\mathrm{eq}}\) (o \(C_{\mathrm{eq}}\), \(Z_{\mathrm{eq}}\)) hasta simplificar.
+  \item Calcular la corriente o tensión global con Ohm: \(I=V/R_{\mathrm{eq}}\).
+  \item ``Deshacer'' la reducción con divisores de \(v\) o de \(i\) para hallar magnitudes internas.
+\end{enumerate}
+
+\subsection{Método 2 --- LCK + LVK + Ohm (análisis directo)}
+\begin{enumerate}
+  \item Etiquetar todas las corrientes de rama y tensiones de elemento (respetar signos).
+  \item Escribir LCK en nodos independientes.
+  \item Escribir LVK en lazos independientes.
+  \item Completar con \(v=Ri\) (u otras \(i\)--\(v\)) y resolver el sistema.
+\end{enumerate}
+
+\subsection{Método 3 --- Superposición}
+Válido en redes \textbf{lineales}. Con \(N\) fuentes independientes se hacen \(N\) experimentos:
+\begin{itemize}
+  \item Fuentes de tensión inactivas \(\to\) \textbf{cortocircuito}.
+  \item Fuentes de corriente inactivas \(\to\) \textbf{circuito abierto}.
+  \item Fuentes dependientes: suelen permanecer activas.
+  \item Resultado: \(i_x = i_x' + i_x'' + \cdots\) (suma algebraica).
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}[thick,font=\small,
+  caja/.style={draw,align=center,minimum width=3.2cm,minimum height=1.15cm,inner sep=3pt}]
+  \node[caja] (o) {Circuito con\\$N$ fuentes};
+  \node[caja,below left=0.85cm and 0.05cm of o] (a) {Solo fuente 1};
+  \node[caja,below=0.85cm of o] (b) {Solo fuente 2};
+  \node[caja,below right=0.85cm and 0.05cm of o] (c) {$\cdots$};
+  \node[caja,below=2.5cm of o] (s) {$i_x=i_x'+i_x''+\cdots$};
+  \draw[-{Latex}] (o) -- (a);
+  \draw[-{Latex}] (o) -- (b);
+  \draw[-{Latex}] (o) -- (c);
+  \draw[-{Latex}] (a) -- (s);
+  \draw[-{Latex}] (b) -- (s);
+  \draw[-{Latex}] (c) -- (s);
+\end{tikzpicture}
+\end{center}
+
+\subsection{Método 4 --- Thévenin}
+Circuito lineal de dos terminales \(\equiv\) \(V_{\mathrm{Th}}\) en serie con \(R_{\mathrm{Th}}\):
+\begin{enumerate}
+  \item Desconectar la carga \(B\); calcular \(V_{\mathrm{Th}}=V_{\mathrm{oc}}\) en las terminales de \(A\).
+  \item Apagar fuentes independientes de \(A\); calcular \(R_{\mathrm{Th}}\) vista desde las terminales.
+  \item Reconectar la carga a \(V_{\mathrm{Th}}\)--\(R_{\mathrm{Th}}\).
+\end{enumerate}
+
+\subsection{Método 5 --- Norton}
+Circuito lineal de dos terminales \(\equiv\) \(I_N\) en paralelo con \(R_N\):
+\begin{enumerate}
+  \item Cortocircuitar las terminales de \(A\); calcular \(I_N=I_{\mathrm{sc}}\).
+  \item Apagar fuentes independientes; \(R_N\) es la misma resistencia equivalente.
+  \item Reconectar la carga a \(I_N\|R_N\).
+\end{enumerate}
+
+\subsection{Equivalencia Thévenin \(\leftrightarrow\) Norton}
+\begin{align}
+R_N &= R_{\mathrm{Th}} \tag{2.26}\\
+I_N &= \frac{V_{\mathrm{Th}}}{R_{\mathrm{Th}}} \tag{2.27}\\
+V_{\mathrm{Th}} &= I_N R_N \tag{2.28}
+\end{align}
+
+\begin{center}
+\begin{tikzpicture}[thick,font=\small]
+  % Thévenin
+  \draw (0,0) -- (0.4,0);
+  \draw (0.4,0) circle (0.32);
+  \node[font=\scriptsize] at (0.4,0) {$V_{\mathrm{Th}}$};
+  \draw (0.72,0) -- (1.0,0)
+    -- (1.2,0.28) -- (1.6,-0.28) -- (2.0,0.28) -- (2.4,-0.28) -- (2.6,0) -- (3.2,0);
+  \node[above,font=\scriptsize] at (1.8,0.32) {$R_{\mathrm{Th}}$};
+  \draw (0,-1.3) -- (3.2,-1.3);
+  \draw (0,0) -- (0,-1.3);
+  \fill (3.2,0) circle (0.04); \fill (3.2,-1.3) circle (0.04);
+  \node[right,font=\scriptsize] at (3.35,0) {A};
+  \node[right,font=\scriptsize] at (3.35,-1.3) {B};
+  \node at (1.6,-1.75) {Thévenin};
+  \draw[-{Latex}] (4.0,-0.65) -- (5.0,-0.65);
+  \node[above,font=\scriptsize] at (4.5,-0.45) {$I_N=V_{\mathrm{Th}}/R_{\mathrm{Th}}$};
+  % Norton
+  \begin{scope}[xshift=5.8cm]
+  \draw (0,0) -- (0.9,0) -- (0.9,-1.3) -- (0,-1.3) -- (0,0);
+  \draw (0.9,-0.33) circle (0.35);
+  \draw[-{Latex}] (0.9,-0.52) -- (0.9,-0.14);
+  \node[right,font=\scriptsize] at (1.3,-0.33) {$I_N$};
+  \draw (0.9,0) -- (1.5,0)
+    -- (1.7,0.28) -- (2.1,-0.28) -- (2.5,0.28) -- (2.9,-0.28) -- (3.1,0) -- (3.1,0);
+  \draw (0.9,-1.3) -- (3.1,-1.3) -- (3.1,0);
+  \node[above,font=\scriptsize] at (2.3,0.32) {$R_N$};
+  \fill (3.1,0) circle (0.04); \fill (3.1,-1.3) circle (0.04);
+  \node[right,font=\scriptsize] at (3.25,0) {A};
+  \node[right,font=\scriptsize] at (3.25,-1.3) {B};
+  \node at (1.7,-1.75) {Norton};
+  \end{scope}
+\end{tikzpicture}
+\end{center}
+
+% ############################################################################
+\section*{Hoja rápida}
+\addcontentsline{toc}{section}{Hoja rápida}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{}cll@{}}
+\toprule
+\textbf{Núm.} & \textbf{Fórmula} & \textbf{Uso}\\
+\midrule
+(2.1)--(2.2) & \(i=\mathrm{d}q/\mathrm{d}t\),\; \(q=\int i\,\mathrm{d}t\) & Corriente / carga\\
+(2.3)--(2.4) & \(V=W/Q\),\; \(p=vi\) & Tensión / potencia\\
+(2.14)--(2.15) & \(v=Ri\),\; \(p=i^{2}R=v^{2}/R\) & Ohm / disipación\\
+--- & Serie: \(i\) igual, \(v\) se suma & Comportamiento\\
+--- & Paralelo: \(v\) igual, \(i\) se suma & Comportamiento\\
+(2.5)--(2.7) & \(q=Cv\),\; \(i=C\,\mathrm{d}v/\mathrm{d}t\) & Capacitor\\
+(2.10)--(2.11) & \(C\) paralelo suma; \(C\) serie como \(R\|\) & Equivalentes \(C\)\\
+(2.12)--(2.13) & \(Z_R=R\), \(Z_L=j\omega L\), \(Z_C=1/(j\omega C)\) & Impedancia\\
+(2.16)--(2.17) & \(v=V_p\mathrm{sen}\,\theta\), \(V_{\mathrm{rms}}=0.707\,V_p\) & CA\\
+(2.18)--(2.21) & \(\sum i=0\),\; \(\sum v=0\) & LCK / LVK\\
+(2.22) & \(v_k=v\,R_k/\sum R\) & Divisor de \(v\)\\
+(2.23)--(2.25) & \(i_k \propto 1/R_k\) & Divisor de \(i\)\\
+(2.26)--(2.28) & \(R_N=R_{\mathrm{Th}}\), \(I_N=V_{\mathrm{Th}}/R_{\mathrm{Th}}\) & Thévenin/Norton\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{0.8em}
+\marco{Orden sugerido al resolver un circuito}{%
+\begin{enumerate}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
+  \item Marcar polaridades de \(v\) y flechas de \(i\) (convención pasiva).
+  \item Preguntar: ¿qué es serie y qué es paralelo? (¿misma \(i\) o misma \(v\)?).
+  \item Reducir \(R\)/\(C\)/\(Z\) si conviene; si no, LCK + LVK + Ohm.
+  \item Varias fuentes independientes \(\to\) superposición.
+  \item Interesa la carga \(\to\) Thévenin o Norton.
+  \item Verificar signos y potencia (¿absorbe o genera?).
+\end{enumerate}
+}
+
+\vspace{1.2em}
+\begin{center}
+\rule{0.35\textwidth}{0.4pt}\\[0.4em]
+{\small Formulario Cap.\ 2 --- Notas de José Aarón Padilla García\\
+Electrónica Analógica I --- FIE, UMSNH}
+\end{center}
+
+\end{document}
